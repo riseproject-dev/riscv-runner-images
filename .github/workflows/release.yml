@@ -1,0 +1,43 @@
+name: Build and Release Github Actions Image
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-runner:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: 2.331.0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
+
+      - name: Login to Scaleway Container Registry
+        run: echo "${{ secrets.SCW_SECRET_KEY }}" | docker login rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s -u nologin --password-stdin
+
+      - name: Build ubuntu-24.04 runner image
+        run: |
+          docker buildx build \
+            --platform linux/riscv64 \
+            --file runner/Dockerfile.ubuntu \
+            --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:ubuntu-24.04-${VERSION} \
+            --push \
+            runner
+
+      - name: Build dind image
+        run: |
+          docker buildx build \
+            --platform linux/riscv64 \
+            --file dind/Dockerfile \
+            --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:ubuntu-24.04-${VERSION}-dind \
+            --push \
+            dind

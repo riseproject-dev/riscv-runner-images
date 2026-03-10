@@ -1,6 +1,6 @@
-FROM docker.io/debian:latest
+FROM docker.io/ubuntu:latest
 
-RUN apt-get update && apt-get install -y libatomic1 docker.io curl git ca-certificates libicu-dev sudo
+RUN apt-get update && apt-get install -y libatomic1 curl git ca-certificates libicu-dev sudo
 
 
 WORKDIR /home/runner
@@ -17,7 +17,6 @@ RUN bash ./bin/installdependencies.sh
 
 # Copy entrypoint script
 COPY entrypoint.sh .
-
 RUN chmod +x entrypoint.sh
 
 # Add a user which will run the github actions
@@ -29,6 +28,5 @@ RUN chown -R runneruser:runneruser /home/runner
 RUN echo "runneruser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runneruser
 
 USER runneruser
-
 
 ENTRYPOINT ["./entrypoint.sh"]
