@@ -1,32 +1,36 @@
-FROM docker.io/ubuntu:latest
 
-RUN apt-get update && apt-get install -y libatomic1 curl git ca-certificates libicu-dev sudo
+ARG UBUNTU_VERSION=latest
+FROM docker.io/ubuntu:${UBUNTU_VERSION}
 
+ARG RUNNER_VERSION=2.331.0
+
+RUN bash -eux -o pipefail <<EOF
+    apt-get update -qq
+    apt-get install -qq -y --no-install-recommends libatomic1 curl git ca-certificates libicu-dev sudo
+    rm -rf /var/lib/apt/lists/*
+EOF
 
 WORKDIR /home/runner
 
-
-
 # Download GitHub runner (replace URL with the latest for your architecture)
-RUN curl -O -L https://github.com/alitariq4589/github-runner-riscv/releases/download/v2.331.0-riscv64-net8/actions-runner-linux-riscv64-2.331.0.tar.gz && \
-    tar xzf actions-runner-linux-riscv64-2.331.0.tar.gz && rm actions-runner-linux-riscv64-2.331.0.tar.gz
-
-# Install dependencies for the runner (if any)
-RUN bash ./bin/installdependencies.sh
-
+RUN bash -eux -o pipefail <<EOF
+    curl -L https://github.com/alitariq4589/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz | \
+        tar xvzf -
+    # Install dependencies for the runner (if any)
+    ./bin/installdependencies.sh
+EOF
 
 # Copy entrypoint script
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 # Add a user which will run the github actions
-RUN useradd -m runneruser
+RUN bash -eux -o pipefail <<EOF
+    useradd -m runner
+    # Add runner to sudoers without password prompt
+    echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
+EOF
 
-RUN chown -R runneruser:runneruser /home/runner
-
-# Add runneruser to sudoers without password prompt
-RUN echo "runneruser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runneruser
-
-USER runneruser
+USER runner
 
 ENTRYPOINT ["./entrypoint.sh"]

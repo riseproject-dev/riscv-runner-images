@@ -1,8 +1,8 @@
 FROM riscv64/debian:latest
 
 RUN bash -eux -o pipefail <<EOF
-    apt-get update
-    apt-get install -y --no-install-recommends docker.io
+    apt-get update -qq
+    apt-get install -qq -y --no-install-recommends docker.io
     rm -rf /var/lib/apt/lists/*
 EOF
 
