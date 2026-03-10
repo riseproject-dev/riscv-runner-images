@@ -3,6 +3,7 @@ FROM riscv64/debian:latest
 RUN bash -eux -o pipefail <<EOF
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
+        ca-certificates \
         docker.io \
         openssl
     rm -rf /var/lib/apt/lists/*
