@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-runner:
+  build-runner-ubuntu-24_04:
     runs-on: ubuntu-latest
     env:
       RUNNER_VERSION: 2.331.0
@@ -34,10 +34,26 @@ jobs:
             --build-arg UBUNTU_VERSION=24.04 \
             --build-arg RUNNER_VERSION=${RUNNER_VERSION} \
             --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:ubuntu-24.04-${RUNNER_VERSION} \
-            --cache-from type=gha,scope=runner \
-            --cache-to type=gha,mode=max,scope=runner \
+            --cache-from type=gha,scope=runner-ubuntu-24.04 \
+            --cache-to type=gha,mode=max,scope=runner-ubuntu-24.04 \
             --push \
             runner
+
+  build-runner-ubuntu-26_04:
+    runs-on: ubuntu-latest
+    env:
+      RUNNER_VERSION: 2.331.0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Login to Scaleway Container Registry
+        run: echo "${{ secrets.SCW_SECRET_KEY }}" | docker login rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s -u nologin --password-stdin
 
       - name: Build ubuntu-26.04 runner image
         run: |
@@ -47,10 +63,24 @@ jobs:
             --build-arg UBUNTU_VERSION=26.04 \
             --build-arg RUNNER_VERSION=${RUNNER_VERSION} \
             --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:ubuntu-26.04-${RUNNER_VERSION} \
-            --cache-from type=gha,scope=runner \
-            --cache-to type=gha,mode=max,scope=runner \
+            --cache-from type=gha,scope=runner-ubuntu-26.04 \
+            --cache-to type=gha,mode=max,scope=runner-ubuntu-26.04 \
             --push \
             runner
+
+  build-dind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Login to Scaleway Container Registry
+        run: echo "${{ secrets.SCW_SECRET_KEY }}" | docker login rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s -u nologin --password-stdin
 
       - name: Build dind image
         run: |
