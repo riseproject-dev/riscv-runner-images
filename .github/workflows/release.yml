@@ -39,6 +39,19 @@ jobs:
             --push \
             runner
 
+      - name: Build ubuntu-26.04 runner image
+        run: |
+          docker buildx build \
+            --platform linux/riscv64 \
+            --file runner/Dockerfile.ubuntu \
+            --build-arg UBUNTU_VERSION=26.04 \
+            --build-arg RUNNER_VERSION=${RUNNER_VERSION} \
+            --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:ubuntu-26.04-${RUNNER_VERSION} \
+            --cache-from type=gha,scope=runner \
+            --cache-to type=gha,mode=max,scope=runner \
+            --push \
+            runner
+
       - name: Build dind image
         run: |
           docker buildx build \
