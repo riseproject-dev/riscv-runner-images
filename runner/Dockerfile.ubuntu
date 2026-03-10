@@ -6,7 +6,7 @@ ARG RUNNER_VERSION=2.331.0
 
 RUN bash -eux -o pipefail <<EOF
     apt-get update -qq
-    apt-get install -qq -y --no-install-recommends libatomic1 curl git ca-certificates libicu-dev sudo
+    apt-get install -qq -y --no-install-recommends libatomic1 curl git ca-certificates libicu-dev sudo docker-cli
     rm -rf /var/lib/apt/lists/*
 EOF
 
