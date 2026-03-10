@@ -57,7 +57,7 @@ jobs:
           docker buildx build \
             --platform linux/riscv64 \
             --file dind/Dockerfile \
-            --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:ubuntu-24.04-${RUNNER_VERSION}-dind \
+            --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:dind \
             --cache-from type=gha,scope=dind \
             --cache-to type=gha,mode=max,scope=dind \
             --push \
