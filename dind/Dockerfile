@@ -12,4 +12,3 @@ VOLUME /var/lib/docker
 EXPOSE 2375 2376
 
 ENTRYPOINT ["/bin/bash", "-x", "/usr/local/bin/dockerd-entrypoint.sh"]
-CMD []
