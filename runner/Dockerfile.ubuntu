@@ -3,6 +3,7 @@ ARG UBUNTU_VERSION=latest
 FROM docker.io/ubuntu:${UBUNTU_VERSION}
 
 ARG RUNNER_VERSION=2.331.0
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN bash -eux -o pipefail <<EOF
     apt-get update -qq
@@ -15,7 +16,9 @@ RUN bash -eux -o pipefail <<EOF
         git \
         libatomic1 \
         libicu-dev \
-        sudo
+        sudo \
+
+    # Clean up apt cache to reduce image size
     rm -rf /var/lib/apt/lists/*
 
     # Add a user which will run the github actions

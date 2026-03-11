@@ -1,5 +1,7 @@
 FROM riscv64/debian:latest
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN bash -eux -o pipefail <<EOF
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
