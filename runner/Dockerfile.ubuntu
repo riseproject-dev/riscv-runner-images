@@ -160,7 +160,7 @@ ENV PATH=/opt/python-3.10/bin:/opt/python-3.11/bin:/opt/python-3.12/bin:/opt/pyt
 
 RUN bash -eux -o pipefail <<'EOF'
     # Get information about current OS
-    . /etc/os-release
+    source /etc/os-release
 
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
