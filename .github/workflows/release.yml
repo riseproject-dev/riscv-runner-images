@@ -12,6 +12,7 @@ on:
     branches:
       - main
       - python
+      - dotnet
   workflow_dispatch:
 
 jobs:
