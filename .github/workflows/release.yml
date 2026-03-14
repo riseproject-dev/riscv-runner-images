@@ -37,7 +37,7 @@ jobs:
             --file runner/Dockerfile.ubuntu \
             --build-arg UBUNTU_VERSION=24.04 \
             --build-arg RUNNER_VERSION=${RUNNER_VERSION} \
-            --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:ubuntu-24.04-${RUNNER_VERSION} \
+            --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:ubuntu-24.04-${RUNNER_VERSION}${{ github.ref == 'refs/heads/main' && '' || format('-{0}', github.ref_name) }} \
             --cache-from type=gha,scope=runner-ubuntu-24.04 \
             --cache-to type=gha,mode=max,scope=runner-ubuntu-24.04 \
             --push \
@@ -66,7 +66,7 @@ jobs:
             --file runner/Dockerfile.ubuntu \
             --build-arg UBUNTU_VERSION=26.04 \
             --build-arg RUNNER_VERSION=${RUNNER_VERSION} \
-            --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:ubuntu-26.04-${RUNNER_VERSION} \
+            --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:ubuntu-26.04-${RUNNER_VERSION}${{ github.ref == 'refs/heads/main' && '' || format('-{0}', github.ref_name) }} \
             --cache-from type=gha,scope=runner-ubuntu-26.04 \
             --cache-to type=gha,mode=max,scope=runner-ubuntu-26.04 \
             --push \
@@ -91,7 +91,7 @@ jobs:
           docker buildx build \
             --platform linux/riscv64 \
             --file dind/Dockerfile \
-            --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:dind \
+            --tag rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:dind${{ github.ref == 'refs/heads/main' && '' || format('-{0}', github.ref_name) }} \
             --cache-from type=gha,scope=dind \
             --cache-to type=gha,mode=max,scope=dind \
             --push \
