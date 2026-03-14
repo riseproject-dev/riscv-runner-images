@@ -2,12 +2,14 @@ FROM riscv64/debian:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN bash -eux -o pipefail <<EOF
+RUN bash -eux -o pipefail <<'EOF'
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
         ca-certificates \
         docker.io \
-        openssl
+        openssl \
+     && true
+
     rm -rf /var/lib/apt/lists/*
 EOF
 
