@@ -1,12 +1,155 @@
 
-ARG UBUNTU_VERSION=latest
-FROM docker.io/ubuntu:${UBUNTU_VERSION}
+# Build Python build image, to be used to build various Python versions
 
-ARG RUNNER_VERSION=2.331.0
+ARG UBUNTU_VERSION=latest
+FROM docker.io/ubuntu:${UBUNTU_VERSION} AS python-builder
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN bash -eux -o pipefail <<EOF
-    # Get information about current image
+    apt-get update -qq
+    apt-get install -qq -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        gcc \
+        g++ \
+        libbz2-dev \
+        libexpat1-dev \
+        libffi-dev \
+        libgdbm-dev \
+        liblzma-dev \
+        libncursesw5-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        make \
+        pkg-config \
+        tk-dev \
+        uuid-dev \
+        wget \
+        zlib1g-dev \
+
+  rm -rf /var/lib/apt/lists/*
+EOF
+
+# Build Python 3.10
+FROM python-builder AS python-3.10
+
+ARG PYTHON310_VERSION=3.10.20
+ARG PYTHON310_SHA256=4ff5fd4c5bab803b935019f3e31d7219cebd6f870d00389cea53b88bbe935d1a # https://www.python.org/downloads/release/python-31020
+RUN bash -eux -o pipefail <<EOF
+    # Download Python 3.10 source tarball
+    wget --progress=dot:giga https://www.python.org/ftp/python/${PYTHON310_VERSION}/Python-${PYTHON310_VERSION}.tgz
+
+    # Verify package integrity
+    echo "${PYTHON310_SHA256}  Python-${PYTHON310_VERSION}.tgz" | sha256sum --check
+
+    # Unpack, Configure, Build, Install
+    tar -xzf Python-${PYTHON310_VERSION}.tgz
+    cd Python-${PYTHON310_VERSION}
+    ./configure --prefix=/opt/python-3.10 --with-ensurepip=install --disable-test-modules
+    make -j$(nproc)
+    make altinstall
+EOF
+
+# Build Python 3.11
+FROM python-builder AS python-3.11
+
+ARG PYTHON311_VERSION=3.11.15
+ARG PYTHON311_SHA256=f4de1b10bd6c70cbb9fa1cd71fc5038b832747a74ee59d599c69ce4846defb50 # https://www.python.org/downloads/release/python-31115
+RUN bash -eux -o pipefail <<EOF
+    # Download Python 3.11 source tarball
+    wget --progress=dot:giga https://www.python.org/ftp/python/${PYTHON311_VERSION}/Python-${PYTHON311_VERSION}.tgz
+
+    # Verify package integrity
+    echo "${PYTHON311_SHA256}  Python-${PYTHON311_VERSION}.tgz" | sha256sum --check
+
+    # Unpack, Configure, Build, Install
+    tar -xzf Python-${PYTHON311_VERSION}.tgz
+    cd Python-${PYTHON311_VERSION}
+    ./configure --prefix=/opt/python-3.11 --with-ensurepip=install --disable-test-modules
+    make -j$(nproc)
+    make altinstall
+EOF
+
+# Build Python 3.12
+FROM python-builder AS python-3.12
+
+ARG PYTHON312_VERSION=3.12.13
+ARG PYTHON312_SHA256=0816c4761c97ecdb3f50a3924de0a93fd78cb63ee8e6c04201ddfaedca500b0b # https://www.python.org/downloads/release/python-31213
+RUN bash -eux -o pipefail <<EOF
+    # Download Python 3.12 source tarball
+    wget --progress=dot:giga https://www.python.org/ftp/python/${PYTHON312_VERSION}/Python-${PYTHON312_VERSION}.tgz
+
+    # Verify package integrity
+    echo "${PYTHON312_SHA256}  Python-${PYTHON312_VERSION}.tgz" | sha256sum --check
+
+    # Unpack, Configure, Build, Install
+    tar -xzf Python-${PYTHON312_VERSION}.tgz
+    cd Python-${PYTHON312_VERSION}
+    ./configure --prefix=/opt/python-3.12 --with-ensurepip=install --disable-test-modules
+    make -j$(nproc)
+    make altinstall
+EOF
+
+# Build Python 3.13
+FROM python-builder AS python-3.13
+
+ARG PYTHON313_VERSION=3.13.12
+ARG PYTHON313_SHA256=12e7cb170ad2d1a69aee96a1cc7fc8de5b1e97a2bdac51683a3db016ec9a2996 # https://www.python.org/downloads/release/python-31312
+RUN bash -eux -o pipefail <<EOF
+    # Download Python 3.13 source tarball
+    wget --progress=dot:giga https://www.python.org/ftp/python/${PYTHON313_VERSION}/Python-${PYTHON313_VERSION}.tgz
+
+    # Verify package integrity
+    echo "${PYTHON313_SHA256}  Python-${PYTHON313_VERSION}.tgz" | sha256sum --check
+
+    # Unpack, Configure, Build, Install
+    tar -xzf Python-${PYTHON313_VERSION}.tgz
+    cd Python-${PYTHON313_VERSION}
+    ./configure --prefix=/opt/python-3.13 --with-ensurepip=install --disable-test-modules
+    make -j$(nproc)
+    make altinstall
+EOF
+
+# Build Python 3.14
+FROM python-builder AS python-3.14
+
+ARG PYTHON314_VERSION=3.14.3
+ARG PYTHON314_SHA256=d7fe130d0501ae047ca318fa92aa642603ab6f217901015a1df6ce650d5470cd # https://www.python.org/downloads/release/python-3143
+RUN bash -eux -o pipefail <<EOF
+    # Download Python 3.14 source tarball
+    wget --progress=dot:giga https://www.python.org/ftp/python/${PYTHON314_VERSION}/Python-${PYTHON314_VERSION}.tgz
+
+    # Verify package integrity
+    echo "${PYTHON314_SHA256}  Python-${PYTHON314_VERSION}.tgz" | sha256sum --check
+
+    # Unpack, Configure, Build, Install
+    tar -xzf Python-${PYTHON314_VERSION}.tgz
+    cd Python-${PYTHON314_VERSION}
+    ./configure --prefix=/opt/python-3.14 --with-ensurepip=install --disable-test-modules
+    make -j$(nproc)
+    make altinstall
+EOF
+
+# Build final image
+
+ARG UBUNTU_VERSION=latest
+FROM docker.io/ubuntu:${UBUNTU_VERSION}
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+COPY --from=python-3.10 /opt/python-3.10/* /usr/local
+COPY --from=python-3.11 /opt/python-3.11/* /usr/local
+COPY --from=python-3.12 /opt/python-3.12/* /usr/local
+COPY --from=python-3.13 /opt/python-3.13/* /usr/local
+COPY --from=python-3.14 /opt/python-3.14/* /usr/local
+
+# Add Python 3.12 to PATH
+ENV PATH=/opt/python-3.12:${PATH}
+
+RUN bash -eux -o pipefail <<EOF
+    # Get information about current OS
     . /etc/os-release
 
     apt-get update -qq
@@ -45,10 +188,19 @@ RUN bash -eux -o pipefail <<EOF
         iputils-ping \
         jq \
         libatomic1 \
+        libbz2-1.0 \
+        libexpat1 \
+        libffi8 \
+        libgdbm6 \
         libicu-dev \
+        liblzma5 \
+        libncursesw6 \
         libnss3-tools \
+        libreadline8 \
+        libsqlite3-0 \
         libsqlite3-dev \
         libssl-dev \
+        libssl3 \
         libtool \
         libyaml-dev \
         locales \
@@ -61,7 +213,6 @@ RUN bash -eux -o pipefail <<EOF
         netcat-openbsd \
         openssh-client \
         p7zip-full \
-        $(test ${VERSION_ID} != "26.04" && echo "p7zip-rar" || true) \
         parallel \
         patchelf \
         pigz \
@@ -90,11 +241,27 @@ RUN bash -eux -o pipefail <<EOF
         tzdata \
         unzip \
         upx \
+        uuid-runtime \
         wget \
         xvfb \
         xz-utils \
         zip \
+        zlib1g \
         zsync \
+
+    if [[ ${VERSION_ID} == "24.04" ]]; then
+        # Install 24.04 specific packages
+        apt-get install -qq -y --no-install-recommends \
+            p7zip-rar \
+
+    elif [[ ${VERSION_ID} == "26.04" ]]; then
+        # Install 26.04 specific packages
+        true # nothing yet
+
+    else
+        echo "Unknown Ubuntu version ${VERSION_ID}"
+        exit 1
+    fi
 
     # Clean up apt cache to reduce image size
     rm -rf /var/lib/apt/lists/*
@@ -113,6 +280,8 @@ EOF
 
 WORKDIR /home/runner
 USER runner
+
+ARG RUNNER_VERSION=2.331.0
 
 # Download GitHub runner (replace URL with the latest for your architecture)
 RUN bash -eux -o pipefail <<EOF
