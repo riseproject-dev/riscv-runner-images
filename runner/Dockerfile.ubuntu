@@ -28,6 +28,7 @@ RUN bash -eux -o pipefail <<EOF
         uuid-dev \
         wget \
         zlib1g-dev \
+     && true
 
   rm -rf /var/lib/apt/lists/*
 EOF
@@ -248,16 +249,16 @@ RUN bash -eux -o pipefail <<EOF
         zip \
         zlib1g \
         zsync \
+     && true
 
-    if [[ ${VERSION_ID} == "24.04" ]]; then
+    if [[ "${VERSION_ID}" == "24.04" ]]; then
         # Install 24.04 specific packages
         apt-get install -qq -y --no-install-recommends \
             p7zip-rar \
-
-    elif [[ ${VERSION_ID} == "26.04" ]]; then
+         && true
+    elif [[ "${VERSION_ID}" == "26.04" ]]; then
         # Install 26.04 specific packages
         true # nothing yet
-
     else
         echo "Unknown Ubuntu version ${VERSION_ID}"
         exit 1
