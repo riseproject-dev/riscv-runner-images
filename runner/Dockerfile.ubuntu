@@ -46,9 +46,9 @@ RUN bash -eux -o pipefail <<EOF
     # Unpack, Configure, Build, Install
     tar -xzf Python-${PYTHON310_VERSION}.tgz
     cd Python-${PYTHON310_VERSION}
-    ./configure --prefix=/opt/python-3.10 --with-ensurepip=install
+    ./configure --prefix=/opt/python-3.10 --with-ensurepip=install --disable-test-modules
     make -j$(nproc)
-    make install
+    make altinstall
 EOF
 
 # Build Python 3.11
@@ -66,9 +66,9 @@ RUN bash -eux -o pipefail <<EOF
     # Unpack, Configure, Build, Install
     tar -xzf Python-${PYTHON311_VERSION}.tgz
     cd Python-${PYTHON311_VERSION}
-    ./configure --prefix=/opt/python-3.11 --with-ensurepip=install
+    ./configure --prefix=/opt/python-3.11 --with-ensurepip=install --disable-test-modules
     make -j$(nproc)
-    make install
+    make altinstall
 EOF
 
 # Build Python 3.12
@@ -86,9 +86,9 @@ RUN bash -eux -o pipefail <<EOF
     # Unpack, Configure, Build, Install
     tar -xzf Python-${PYTHON312_VERSION}.tgz
     cd Python-${PYTHON312_VERSION}
-    ./configure --prefix=/opt/python-3.12 --with-ensurepip=install
+    ./configure --prefix=/opt/python-3.12 --with-ensurepip=install --disable-test-modules
     make -j$(nproc)
-    make install
+    make altinstall
 EOF
 
 # Build Python 3.13
@@ -106,9 +106,9 @@ RUN bash -eux -o pipefail <<EOF
     # Unpack, Configure, Build, Install
     tar -xzf Python-${PYTHON313_VERSION}.tgz
     cd Python-${PYTHON313_VERSION}
-    ./configure --prefix=/opt/python-3.13 --with-ensurepip=install
+    ./configure --prefix=/opt/python-3.13 --with-ensurepip=install --disable-test-modules
     make -j$(nproc)
-    make install
+    make altinstall
 EOF
 
 # Build Python 3.14
@@ -126,9 +126,9 @@ RUN bash -eux -o pipefail <<EOF
     # Unpack, Configure, Build, Install
     tar -xzf Python-${PYTHON314_VERSION}.tgz
     cd Python-${PYTHON314_VERSION}
-    ./configure --prefix=/opt/python-3.14 --with-ensurepip=install
+    ./configure --prefix=/opt/python-3.14 --with-ensurepip=install --disable-test-modules
     make -j$(nproc)
-    make install
+    make altinstall
 EOF
 
 # Build Python 3.14 w/o GIL
@@ -146,9 +146,9 @@ RUN bash -eux -o pipefail <<EOF
     # Unpack, Configure, Build, Install
     tar -xzf Python-${PYTHON314_VERSION}.tgz
     cd Python-${PYTHON314_VERSION}
-    ./configure --prefix=/opt/python-3.14t --with-ensurepip=install --disable-gil
+    ./configure --prefix=/opt/python-3.14t --with-ensurepip=install --disable-test-modules  --disable-gil
     make -j$(nproc)
-    make install
+    make altinstall
 EOF
 
 # Build final image
