@@ -157,11 +157,11 @@ FROM docker.io/ubuntu:${UBUNTU_VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-COPY --from=python-3.10 /opt/python-3.10/* /usr/local
-COPY --from=python-3.11 /opt/python-3.11/* /usr/local
+# COPY --from=python-3.10 /opt/python-3.10/* /usr/local
+# COPY --from=python-3.11 /opt/python-3.11/* /usr/local
 COPY --from=python-3.12 /opt/python-3.12/* /usr/local
-COPY --from=python-3.13 /opt/python-3.13/* /usr/local
-COPY --from=python-3.14 /opt/python-3.14/* /usr/local
+# COPY --from=python-3.13 /opt/python-3.13/* /usr/local
+# COPY --from=python-3.14 /opt/python-3.14/* /usr/local
 
 COPY --from=dotnet-9.0 /runtime/artifacts/bin/dotnet-riscv64/ /usr/local/dotnet/
 
