@@ -1,8 +1,8 @@
 
 # Build Python build image, to be used to build various Python versions
 
-ARG UBUNTU_VERSION=latest
-FROM docker.io/ubuntu:${UBUNTU_VERSION} AS python-builder
+ARG OS_VERSION=latest
+FROM docker.io/ubuntu:${OS_VERSION} AS python-builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -145,8 +145,8 @@ EOF
 
 # Build final image
 
-ARG UBUNTU_VERSION=latest
-FROM docker.io/ubuntu:${UBUNTU_VERSION}
+ARG OS_VERSION=latest
+FROM docker.io/ubuntu:${OS_VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
