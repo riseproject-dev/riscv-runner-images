@@ -23,6 +23,7 @@ RUN bash -eux -o pipefail <<'EOF'
         libsqlite3-dev \
         libssl-dev \
         make \
+        patchelf \
         pkg-config \
         tk-dev \
         uuid-dev \
@@ -45,14 +46,27 @@ RUN bash -eux -o pipefail <<'EOF'
     # Verify package integrity
     echo "${PYTHON310_SHA256}  Python-${PYTHON310_VERSION}.tgz" | sha256sum --check
 
-    # Unpack, Configure, Build, Install
+    # Unpack source tar file
     tar -xzf Python-${PYTHON310_VERSION}.tgz
     pushd Python-${PYTHON310_VERSION}
-    ./configure --prefix=/opt/python-3.10 --with-ensurepip=install --disable-test-modules
+
+    # Configure & Build
+    ./configure --prefix=/opt/python-3.10 --with-ensurepip=install --disable-test-modules --enable-shared
     make -j$(nproc)
+
+    # Install without conflicting with other versions of Python
     make altinstall
+
+    # Fix RPATH for python3.10 executable
+    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.10/bin/python3.10
+
     popd
+
+    # Remove now-unnecessary source directory
     rm -rf Python-${PYTHON310_VERSION}
+
+    # Smoke test
+    /opt/python-3.10/bin/python3.10 --version
 EOF
 
 # Build Python 3.11
@@ -67,14 +81,27 @@ RUN bash -eux -o pipefail <<'EOF'
     # Verify package integrity
     echo "${PYTHON311_SHA256}  Python-${PYTHON311_VERSION}.tgz" | sha256sum --check
 
-    # Unpack, Configure, Build, Install
+    # Unpack source tar file
     tar -xzf Python-${PYTHON311_VERSION}.tgz
     pushd Python-${PYTHON311_VERSION}
-    ./configure --prefix=/opt/python-3.11 --with-ensurepip=install --disable-test-modules
+
+    # Configure & Build
+    ./configure --prefix=/opt/python-3.11 --with-ensurepip=install --disable-test-modules --enable-shared
     make -j$(nproc)
+
+    # Install without conflicting with other versions of Python
     make altinstall
+
+    # Fix RPATH for python3.11 executable
+    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.11/bin/python3.11
+
     popd
+
+    # Remove now-unnecessary source directory
     rm -rf Python-${PYTHON311_VERSION}
+
+    # Smoke test
+    /opt/python-3.11/bin/python3.11 --version
 EOF
 
 # Build Python 3.12
@@ -89,14 +116,27 @@ RUN bash -eux -o pipefail <<'EOF'
     # Verify package integrity
     echo "${PYTHON312_SHA256}  Python-${PYTHON312_VERSION}.tgz" | sha256sum --check
 
-    # Unpack, Configure, Build, Install
+    # Unpack source tar file
     tar -xzf Python-${PYTHON312_VERSION}.tgz
     pushd Python-${PYTHON312_VERSION}
-    ./configure --prefix=/opt/python-3.12 --with-ensurepip=install --disable-test-modules
+
+    # Configure & Build
+    ./configure --prefix=/opt/python-3.12 --with-ensurepip=install --disable-test-modules --enable-shared
     make -j$(nproc)
+
+    # Install without conflicting with other versions of Python
     make altinstall
+
+    # Fix RPATH for python3.12 executable
+    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.12/bin/python3.12
+
     popd
+
+    # Remove now-unnecessary source directory
     rm -rf Python-${PYTHON312_VERSION}
+
+    # Smoke test
+    /opt/python-3.12/bin/python3.12 --version
 EOF
 
 # Build Python 3.13
@@ -111,14 +151,27 @@ RUN bash -eux -o pipefail <<'EOF'
     # Verify package integrity
     echo "${PYTHON313_SHA256}  Python-${PYTHON313_VERSION}.tgz" | sha256sum --check
 
-    # Unpack, Configure, Build, Install
+    # Unpack source tar file
     tar -xzf Python-${PYTHON313_VERSION}.tgz
     pushd Python-${PYTHON313_VERSION}
-    ./configure --prefix=/opt/python-3.13 --with-ensurepip=install --disable-test-modules
+
+    # Configure & Build
+    ./configure --prefix=/opt/python-3.13 --with-ensurepip=install --disable-test-modules --enable-shared
     make -j$(nproc)
+
+    # Install without conflicting with other versions of Python
     make altinstall
+
+    # Fix RPATH for python3.13 executable
+    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.13/bin/python3.13
+
     popd
+
+    # Remove now-unnecessary source directory
     rm -rf Python-${PYTHON313_VERSION}
+
+    # Smoke test
+    /opt/python-3.13/bin/python3.13 --version
 EOF
 
 # Build Python 3.14
@@ -133,14 +186,27 @@ RUN bash -eux -o pipefail <<'EOF'
     # Verify package integrity
     echo "${PYTHON314_SHA256}  Python-${PYTHON314_VERSION}.tgz" | sha256sum --check
 
-    # Unpack, Configure, Build, Install
+    # Unpack source tar file
     tar -xzf Python-${PYTHON314_VERSION}.tgz
     pushd Python-${PYTHON314_VERSION}
-    ./configure --prefix=/opt/python-3.14 --with-ensurepip=install --disable-test-modules
+
+    # Configure & Build
+    ./configure --prefix=/opt/python-3.14 --with-ensurepip=install --disable-test-modules --enable-shared
     make -j$(nproc)
+
+    # Install without conflicting with other versions of Python
     make altinstall
+
+    # Fix RPATH for python3.14 executable
+    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.14/bin/python3.14
+
     popd
+
+    # Remove now-unnecessary source directory
     rm -rf Python-${PYTHON314_VERSION}
+
+    # Smoke test
+    /opt/python-3.14/bin/python3.14 --version
 EOF
 
 # Build final image
