@@ -274,7 +274,26 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf /var/lib/apt/lists/*
 
     # Make Python 3.12 the default python3 binary
-    ln -srf /opt/python-3.12/bin/python3.12 /usr/bin/python3
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.10/bin/python3.10  10 \
+        --slave /usr/bin/pip3 pip3 /opt/python-3.10/bin/pip3.10 \
+        --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.10/bin/pydoc3.10 \
+        --slave /usr/bin/python3-config python3-config /opt/python-3.10/bin/python3.10-config
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.11/bin/python3.11  11 \
+        --slave /usr/bin/pip3 pip3 /opt/python-3.11/bin/pip3.11 \
+        --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.11/bin/pydoc3.11 \
+        --slave /usr/bin/python3-config python3-config /opt/python-3.11/bin/python3.11-config
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.12/bin/python3.12 100 \
+        --slave /usr/bin/pip3 pip3 /opt/python-3.12/bin/pip3.12 \
+        --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.12/bin/pydoc3.12 \
+        --slave /usr/bin/python3-config python3-config /opt/python-3.12/bin/python3.12-config
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.13/bin/python3.13  13 \
+        --slave /usr/bin/pip3 pip3 /opt/python-3.13/bin/pip3.13 \
+        --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.13/bin/pydoc3.13 \
+        --slave /usr/bin/python3-config python3-config /opt/python-3.13/bin/python3.13-config
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.14/bin/python3.14  14 \
+        --slave /usr/bin/pip3 pip3 /opt/python-3.14/bin/pip3.14 \
+        --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.14/bin/pydoc3.14 \
+        --slave /usr/bin/python3-config python3-config /opt/python-3.14/bin/python3.14-config
 
     # Add a user which will run the github actions
     useradd -m runner
