@@ -1,6 +1,6 @@
 # RISC-V Runner Images
 
-Container images for running GitHub Actions self-hosted runners on RISC-V (`linux/riscv64`).
+Container images for running GitHub Actions runners on RISC-V (`linux/riscv64`).
 
 Images are built with QEMU cross-compilation via Docker Buildx and pushed to the Scaleway Container Registry.
 
@@ -8,7 +8,7 @@ Images are built with QEMU cross-compilation via Docker Buildx and pushed to the
 
 ### Runner (`runner/Dockerfile.ubuntu`)
 
-GitHub Actions self-hosted runner based on Ubuntu. Available variants:
+GitHub Actions runner based on Ubuntu. Available variants:
 
 | Tag | Base |
 |-----|------|
@@ -17,13 +17,18 @@ GitHub Actions self-hosted runner based on Ubuntu. Available variants:
 
 The runner image includes:
 - [GitHub Actions Runner for RISC-V](https://github.com/alitariq4589/github-runner-riscv) (built with .NET 8)
+- Java 17, 21, 25 (default), from [Adoptium Temurin](https://adoptium.net/)
+- Python 3.10, 3.11, 3.12 (default), 3.13, 3.13t (free threaded), 3.14, 3.14t (free threaded)
+- Node.js, npm
+- Apache Ant 1.10.14, Gradle 9.3.1, Apache Maven 3.9.12
+- Lerna 9.0.5
 - Docker CLI, Docker Buildx, Docker Compose
-- git, curl, sudo
+- git, curl, wget, jq, sudo, and many more CLI tools
 
 We are aiming to match packages installed in the [official GitHub Actions runner images](https://github.com/actions/runner-images/blob/ubuntu24/20260302.42/images/ubuntu/Ubuntu2404-Readme.md). **Let us know if any package you depend on is missing!**
 
 Build args:
-- `UBUNTU_VERSION` — Ubuntu base image version (default: `latest`)
+- `OS_VERSION` — Ubuntu base image version (default: `latest`)
 - `RUNNER_VERSION` — GitHub Actions runner version (default: `2.331.0`)
 
 ### Docker-in-Docker (`dind/Dockerfile`)
@@ -52,13 +57,12 @@ Runs `dockerd` via the bundled `dockerd-entrypoint.sh` (sourced from the [offici
 
 ## CI/CD
 
-The GitHub Actions workflow (`.github/workflows/release.yml`) triggers on pushes to `main` and manual dispatch. It runs three parallel jobs:
+The GitHub Actions workflow (`.github/workflows/release.yml`) triggers on pushes to `main`, on a daily schedule, and manual dispatch. It uses a matrix strategy with two jobs:
 
-- `build-runner-ubuntu-24_04`
-- `build-runner-ubuntu-26_04`
-- `build-dind`
+- `build-runner` — builds Ubuntu 24.04 and 26.04 runner images (via matrix)
+- `build-dind` — builds the Docker-in-Docker sidecar image
 
-Each job uses QEMU + Docker Buildx to cross-compile for `linux/riscv64` and pushes to the Scaleway registry. GitHub Actions cache (`type=gha`) is used to speed up builds. A concurrency group ensures only the latest run per branch executes.
+The Ubuntu 24.04 runner builds natively on `ubuntu-24.04-riscv` self-hosted runners. The Ubuntu 26.04 runner builds with QEMU cross-compilation on `ubuntu-latest`. All images are pushed to the Scaleway Container Registry. GitHub Actions cache (`type=gha`) is used to speed up builds. A concurrency group ensures only the latest run per branch executes.
 
 ## Building Locally
 
@@ -67,7 +71,7 @@ Each job uses QEMU + Docker Buildx to cross-compile for `linux/riscv64` and push
 docker buildx build \
   --platform linux/riscv64 \
   --file runner/Dockerfile.ubuntu \
-  --build-arg UBUNTU_VERSION=24.04 \
+  --build-arg OS_VERSION=24.04 \
   --build-arg RUNNER_VERSION=2.331.0 \
   --tag riscv-runner:ubuntu-24.04 \
   runner
@@ -80,7 +84,7 @@ docker buildx build \
   dind
 ```
 
-Requires Docker with QEMU user-static registered (`docker run --rm --privileged multiarch/qemu-user-static --reset -p yes`).
+When cross-compiling, requires Docker with QEMU user-static registered (`docker run --rm --privileged multiarch/qemu-user-static --reset -p yes`).
 
 ## License
 

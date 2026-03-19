@@ -174,6 +174,41 @@ RUN bash -eux -o pipefail <<'EOF'
     /opt/python-3.13/bin/python3.13 --version
 EOF
 
+# Build Python 3.13t (free-threaded)
+FROM python-builder AS python-3.13t
+
+ARG PYTHON313_VERSION=3.13.12
+ARG PYTHON313_SHA256=12e7cb170ad2d1a69aee96a1cc7fc8de5b1e97a2bdac51683a3db016ec9a2996 # https://www.python.org/downloads/release/python-31312
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Python 3.13 source tarball
+    wget --progress=dot:giga https://www.python.org/ftp/python/${PYTHON313_VERSION}/Python-${PYTHON313_VERSION}.tgz
+
+    # Verify package integrity
+    echo "${PYTHON313_SHA256}  Python-${PYTHON313_VERSION}.tgz" | sha256sum --check
+
+    # Unpack source tar file
+    tar -xzf Python-${PYTHON313_VERSION}.tgz
+    pushd Python-${PYTHON313_VERSION}
+
+    # Configure & Build
+    ./configure --prefix=/opt/python-3.13t --with-ensurepip=install --disable-test-modules --enable-shared --disable-gil
+    make -j$(nproc)
+
+    # Install without conflicting with other versions of Python
+    make altinstall
+
+    # Fix RPATH for python3.13 executable
+    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.13t/bin/python3.13
+
+    popd
+
+    # Remove now-unnecessary source directory
+    rm -rf Python-${PYTHON313_VERSION}
+
+    # Smoke test
+    /opt/python-3.13t/bin/python3.13 --version
+EOF
+
 # Build Python 3.14
 FROM python-builder AS python-3.14
 
@@ -209,6 +244,41 @@ RUN bash -eux -o pipefail <<'EOF'
     /opt/python-3.14/bin/python3.14 --version
 EOF
 
+# Build Python 3.14
+FROM python-builder AS python-3.14t
+
+ARG PYTHON314_VERSION=3.14.3
+ARG PYTHON314_SHA256=d7fe130d0501ae047ca318fa92aa642603ab6f217901015a1df6ce650d5470cd # https://www.python.org/downloads/release/python-3143
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Python 3.14 source tarball
+    wget --progress=dot:giga https://www.python.org/ftp/python/${PYTHON314_VERSION}/Python-${PYTHON314_VERSION}.tgz
+
+    # Verify package integrity
+    echo "${PYTHON314_SHA256}  Python-${PYTHON314_VERSION}.tgz" | sha256sum --check
+
+    # Unpack source tar file
+    tar -xzf Python-${PYTHON314_VERSION}.tgz
+    pushd Python-${PYTHON314_VERSION}
+
+    # Configure & Build
+    ./configure --prefix=/opt/python-3.14t --with-ensurepip=install --disable-test-modules --enable-shared --disable-gil
+    make -j$(nproc)
+
+    # Install without conflicting with other versions of Python
+    make altinstall
+
+    # Fix RPATH for python3.14 executable
+    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.14t/bin/python3.14
+
+    popd
+
+    # Remove now-unnecessary source directory
+    rm -rf Python-${PYTHON314_VERSION}
+
+    # Smoke test
+    /opt/python-3.14t/bin/python3.14 --version
+EOF
+
 # Build final image
 
 ARG OS_VERSION=latest
@@ -220,7 +290,9 @@ COPY --from=python-3.10 /opt/python-3.10 /opt/python-3.10
 COPY --from=python-3.11 /opt/python-3.11 /opt/python-3.11
 COPY --from=python-3.12 /opt/python-3.12 /opt/python-3.12
 COPY --from=python-3.13 /opt/python-3.13 /opt/python-3.13
+COPY --from=python-3.13t /opt/python-3.13t /opt/python-3.13t
 COPY --from=python-3.14 /opt/python-3.14 /opt/python-3.14
+COPY --from=python-3.14t /opt/python-3.14t /opt/python-3.14t
 
 ENV PATH=/opt/python-3.10/bin:/opt/python-3.11/bin:/opt/python-3.12/bin:/opt/python-3.13/bin:/opt/python-3.14/bin:${PATH}
 
@@ -287,6 +359,8 @@ RUN bash -eux -o pipefail <<'EOF'
         mercurial \
         net-tools \
         netcat-openbsd \
+        nodejs \
+        npm \
         openssh-client \
         p7zip-full \
         parallel \
@@ -340,32 +414,192 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf /var/lib/apt/lists/*
 
     # Make Python 3.12 the default python3 binary
-    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.10/bin/python3.10  10 \
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.10/bin/python3.10  100 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.10/bin/pip3.10 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.10/bin/pydoc3.10 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.10/bin/python3.10-config
-    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.11/bin/python3.11  11 \
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.11/bin/python3.11  110 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.11/bin/pip3.11 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.11/bin/pydoc3.11 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.11/bin/python3.11-config
-    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.12/bin/python3.12 100 \
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.12/bin/python3.12 1000 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.12/bin/pip3.12 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.12/bin/pydoc3.12 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.12/bin/python3.12-config
-    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.13/bin/python3.13  13 \
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.13/bin/python3.13  130 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.13/bin/pip3.13 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.13/bin/pydoc3.13 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.13/bin/python3.13-config
-    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.14/bin/python3.14  14 \
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.13t/bin/python3.13  131 \
+        --slave /usr/bin/pip3 pip3 /opt/python-3.13t/bin/pip3.13 \
+        --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.13t/bin/pydoc3.13 \
+        --slave /usr/bin/python3-config python3-config /opt/python-3.13t/bin/python3.13-config
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.14/bin/python3.14  140 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.14/bin/pip3.14 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.14/bin/pydoc3.14 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.14/bin/python3.14-config
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.14t/bin/python3.14  141 \
+        --slave /usr/bin/pip3 pip3 /opt/python-3.14t/bin/pip3.14 \
+        --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.14t/bin/pydoc3.14 \
+        --slave /usr/bin/python3-config python3-config /opt/python-3.14t/bin/python3.14-config
 
     # Add a user which will run the github actions
     useradd -m runner
     # Add runner to sudoers without password prompt
     echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
 EOF
+
+# Install Java 17
+
+ARG JAVA17_VERSION=17.0.18+8
+ARG JAVA17_SHA256=485f49ec3f7048b466c3b8e5b543932c8aae845a1ba95ebb30fc527019371ed4 # https://api.adoptium.net/v3/assets/latest/17/hotspot?os=linux&architecture=riscv64&image_type=jdk
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Adoptium Temurin JDK 17 binary tarball
+    wget --progress=dot:giga "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.18%2B8/OpenJDK17U-jdk_riscv64_linux_hotspot_17.0.18_8.tar.gz" \
+        -O "openjdk-${JAVA17_VERSION}.tar.gz"
+
+    # Verify package integrity
+    echo "${JAVA17_SHA256}  openjdk-${JAVA17_VERSION}.tar.gz" | sha256sum --check
+
+    # Unpack to /opt
+    tar -xzf "openjdk-${JAVA17_VERSION}.tar.gz" -C /opt
+
+    # Remove now-unnecessary tarball
+    rm "openjdk-${JAVA17_VERSION}.tar.gz"
+
+    # Smoke test
+    /opt/jdk-${JAVA17_VERSION}/bin/java -version
+EOF
+
+# Install Java 21
+
+ARG JAVA21_VERSION=21.0.10+7
+ARG JAVA21_SHA256=a57fd486c3c24ed615eb91ef9421ddd38c720e7398df5a161872fb26ad825936 # https://api.adoptium.net/v3/assets/latest/21/hotspot?os=linux&architecture=riscv64&image_type=jdk
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Adoptium Temurin JDK 21 binary tarball
+    wget --progress=dot:giga "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jdk_riscv64_linux_hotspot_21.0.10_7.tar.gz" \
+        -O "openjdk-${JAVA21_VERSION}.tar.gz"
+
+    # Verify package integrity
+    echo "${JAVA21_SHA256}  openjdk-${JAVA21_VERSION}.tar.gz" | sha256sum --check
+
+    # Unpack to /opt
+    tar -xzf "openjdk-${JAVA21_VERSION}.tar.gz" -C /opt
+
+    # Remove now-unnecessary tarball
+    rm "openjdk-${JAVA21_VERSION}.tar.gz"
+
+    # Smoke test
+    /opt/jdk-${JAVA21_VERSION}/bin/java -version
+EOF
+
+# Install Java 25
+
+ARG JAVA25_VERSION=25.0.2+10
+ARG JAVA25_SHA256=168119e4fba350f4e6b3ca92450a2b90a8502b89a235a04415e9adf9f5d3164e # https://api.adoptium.net/v3/assets/latest/25/hotspot?os=linux&architecture=riscv64&image_type=jdk
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Adoptium Temurin JDK 25 binary tarball
+    wget --progress=dot:giga "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.2%2B10/OpenJDK25U-jdk_riscv64_linux_hotspot_25.0.2_10.tar.gz" \
+        -O "openjdk-${JAVA25_VERSION}.tar.gz"
+
+    # Verify package integrity
+    echo "${JAVA25_SHA256}  openjdk-${JAVA25_VERSION}.tar.gz" | sha256sum --check
+
+    # Unpack to /opt
+    tar -xzf "openjdk-${JAVA25_VERSION}.tar.gz" -C /opt
+
+    # Remove now-unnecessary tarball
+    rm "openjdk-${JAVA25_VERSION}.tar.gz"
+
+    # Smoke test
+    /opt/jdk-${JAVA25_VERSION}/bin/java -version
+EOF
+
+ENV JAVA_HOME_17_RISCV64=/opt/jdk-${JAVA17_VERSION}
+ENV JAVA_HOME_21_RISCV64=/opt/jdk-${JAVA21_VERSION}
+ENV JAVA_HOME_25_RISCV64=/opt/jdk-${JAVA25_VERSION}
+ENV JAVA_HOME=${JAVA_HOME_25_RISCV64}
+ENV PATH=${JAVA_HOME}/bin:${PATH}
+
+# Install Apache Ant
+
+ARG ANT_VERSION=1.10.14
+ARG ANT_SHA512=4e74b382dd8271f9eac9fef69ba94751fb8a8356dbd995c4d642f2dad33de77bd37d4001d6c8f4f0ef6789529754968f0c1b6376668033c8904c6ec84543332a # https://archive.apache.org/dist/ant/binaries
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Apache Ant binary tarball
+    wget --progress=dot:giga https://archive.apache.org/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz
+
+    # Verify package integrity
+    echo "${ANT_SHA512}  apache-ant-${ANT_VERSION}-bin.tar.gz" | sha512sum --check
+
+    # Unpack to /opt
+    tar -xzf apache-ant-${ANT_VERSION}-bin.tar.gz -C /opt
+
+    # Smoke test
+    /opt/apache-ant-${ANT_VERSION}/bin/ant -version
+EOF
+
+ENV ANT_HOME=/opt/apache-ant-${ANT_VERSION}
+ENV PATH=${ANT_HOME}/bin:${PATH}
+
+# Install Gradle
+
+ARG GRADLE_VERSION=9.3.1
+ARG GRADLE_SHA256=b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06 # https://services.gradle.org/distributions
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Gradle binary zip
+    wget --progress=dot:giga https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
+
+    # Verify package integrity
+    echo "${GRADLE_SHA256}  gradle-${GRADLE_VERSION}-bin.zip" | sha256sum --check
+
+    # Unpack to /opt
+    unzip -q gradle-${GRADLE_VERSION}-bin.zip -d /opt
+
+    # Remove now-unnecessary zip
+    rm gradle-${GRADLE_VERSION}-bin.zip
+
+    # Smoke test
+    /opt/gradle-${GRADLE_VERSION}/bin/gradle --version
+EOF
+
+ENV GRADLE_HOME=/opt/gradle-${GRADLE_VERSION}
+ENV PATH=${GRADLE_HOME}/bin:${PATH}
+
+# Install Lerna
+
+ARG LERNA_VERSION=9.0.5
+RUN bash -eux -o pipefail <<'EOF'
+    # Install Lerna globally via npm
+    npm install -g lerna@${LERNA_VERSION}
+
+    # Smoke test
+    lerna --version
+EOF
+
+# Install Apache Maven
+
+ARG MAVEN_VERSION=3.9.12
+ARG MAVEN_SHA512=0a1be79f02466533fc1a80abbef8796e4f737c46c6574ede5658b110899942a94db634477dfd3745501c80aef9aac0d4f841d38574373f7e2d24cce89d694f70 # https://archive.apache.org/dist/maven/maven-3
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Apache Maven binary tarball
+    wget --progress=dot:giga https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+
+    # Verify package integrity
+    echo "${MAVEN_SHA512}  apache-maven-${MAVEN_VERSION}-bin.tar.gz" | sha512sum --check
+
+    # Unpack to /opt
+    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt
+
+    # Remove now-unnecessary tarball
+    rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
+
+    # Smoke test
+    /opt/apache-maven-${MAVEN_VERSION}bin/mvn --version
+EOF
+
+ENV MAVEN_HOME=/opt/apache-maven-${MAVEN_VERSION}
+ENV PATH=${MAVEN_HOME}/bin:${PATH}
 
 WORKDIR /home/runner
 USER runner
