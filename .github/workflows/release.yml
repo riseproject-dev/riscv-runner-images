@@ -13,6 +13,10 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+  merge_group:
   workflow_dispatch:
 
 env:
@@ -46,6 +50,7 @@ jobs:
               max-parallelism = 2
 
       - name: Login to Scaleway Container Registry
+        if: github.repository_owner == 'riseproject-dev'
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s
@@ -58,13 +63,13 @@ jobs:
           context: runner
           file: runner/Dockerfile.${{ matrix.os }}
           platforms: linux/riscv64
-          tags: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:${{ matrix.os }}-${{ matrix.os-version }}-${{ env.RUNNER_VERSION }}${{ github.ref != 'refs/heads/main' && format('-{0}', github.ref_name) || '' }}
+          tags: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:${{ matrix.os }}-${{ matrix.os-version }}-${{ env.RUNNER_VERSION }}${{ github.ref != 'refs/heads/main' && format('-{0}', github.run_number) || '' }}
           build-args: |
             OS_VERSION=${{ matrix.os-version }}
             RUNNER_VERSION=${{ env.RUNNER_VERSION }}
           cache-from: type=gha,scope=runner-${{ matrix.os }}-${{ matrix.os-version }}
           cache-to: type=gha,mode=max,scope=runner-${{ matrix.os }}-${{ matrix.os-version }}
-          push: true
+          push: ${{ github.repository_owner == 'riseproject-dev' }}
 
   build-dind:
     runs-on: ubuntu-24.04-riscv
@@ -80,6 +85,7 @@ jobs:
               max-parallelism = 2
 
       - name: Login to Scaleway Container Registry
+        if: github.repository_owner == 'riseproject-dev'
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s
@@ -91,7 +97,7 @@ jobs:
         with:
           platforms: linux/riscv64
           context: dind
-          tags: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:dind${{ github.ref != 'refs/heads/main' && format('-{0}', github.ref_name) || '' }}
+          tags: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:dind${{ github.ref != 'refs/heads/main' && format('-{0}', github.run_number) || '' }}
           cache-from: type=gha,scope=dind
           cache-to: type=gha,mode=max,scope=dind
-          push: true
+          push: ${{ github.repository_owner == 'riseproject-dev' }}
