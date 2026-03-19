@@ -149,15 +149,6 @@ ARG OS_VERSION=latest
 FROM docker.io/ubuntu:${OS_VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
-
-COPY --from=python-3.10 /opt/python-3.10 /opt/python-3.10
-COPY --from=python-3.11 /opt/python-3.11 /opt/python-3.11
-COPY --from=python-3.12 /opt/python-3.12 /opt/python-3.12
-COPY --from=python-3.13 /opt/python-3.13 /opt/python-3.13
-COPY --from=python-3.14 /opt/python-3.14 /opt/python-3.14
-
-ENV PATH=/opt/python-3.10/bin:/opt/python-3.11/bin:/opt/python-3.12/bin:/opt/python-3.13/bin:/opt/python-3.14/bin:${PATH}
-
 RUN bash -eux -o pipefail <<'EOF'
     # Get information about current OS
     source /etc/os-release
@@ -273,24 +264,41 @@ RUN bash -eux -o pipefail <<'EOF'
     # Clean up apt cache to reduce image size
     rm -rf /var/lib/apt/lists/*
 
+    # Add a user which will run the github actions
+    useradd -m runner
+    # Add runner to sudoers without password prompt
+    echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
+EOF
+
+# Install Python 3.10-3.14
+
+COPY --from=python-3.10 /opt/python-3.10 /opt/python-3.10
+COPY --from=python-3.11 /opt/python-3.11 /opt/python-3.11
+COPY --from=python-3.12 /opt/python-3.12 /opt/python-3.12
+COPY --from=python-3.13 /opt/python-3.13 /opt/python-3.13
+COPY --from=python-3.14 /opt/python-3.14 /opt/python-3.14
+
+ENV PATH=/opt/python-3.10/bin:/opt/python-3.11/bin:/opt/python-3.12/bin:/opt/python-3.13/bin:/opt/python-3.14/bin:${PATH}
+
+RUN bash -eux -o pipefail <<'EOF'
     # Make Python 3.12 the default python3 binary
-    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.10/bin/python3.10  10 \
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.10/bin/python3.10  100 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.10/bin/pip3.10 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.10/bin/pydoc3.10 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.10/bin/python3.10-config
-    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.11/bin/python3.11  11 \
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.11/bin/python3.11  110 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.11/bin/pip3.11 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.11/bin/pydoc3.11 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.11/bin/python3.11-config
-    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.12/bin/python3.12 100 \
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.12/bin/python3.12 1000 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.12/bin/pip3.12 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.12/bin/pydoc3.12 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.12/bin/python3.12-config
-    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.13/bin/python3.13  13 \
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.13/bin/python3.13  130 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.13/bin/pip3.13 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.13/bin/pydoc3.13 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.13/bin/python3.13-config
-    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.14/bin/python3.14  14 \
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.14/bin/python3.14  140 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.14/bin/pip3.14 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.14/bin/pydoc3.14 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.14/bin/python3.14-config
@@ -373,12 +381,146 @@ RUN bash -eux -o pipefail <<'EOF'
         --slave /usr/bin/gofmt gofmt /opt/go-1.25/bin/gofmt
 EOF
 
+# Install Java 17
+
+ARG JAVA17_VERSION=17.0.18+8
+ARG JAVA17_SHA256=485f49ec3f7048b466c3b8e5b543932c8aae845a1ba95ebb30fc527019371ed4 # https://api.adoptium.net/v3/assets/latest/17/hotspot?os=linux&architecture=riscv64&image_type=jdk
 RUN bash -eux -o pipefail <<'EOF'
-    # Add a user which will run the github actions
-    useradd -m runner
-    # Add runner to sudoers without password prompt
-    echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
+    # Download Adoptium Temurin JDK 17 binary tarball
+    wget --progress=dot:giga "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.18%2B8/OpenJDK17U-jdk_riscv64_linux_hotspot_17.0.18_8.tar.gz" \
+        -O "openjdk-${JAVA17_VERSION}.tar.gz"
+
+    # Verify package integrity
+    echo "${JAVA17_SHA256}  openjdk-${JAVA17_VERSION}.tar.gz" | sha256sum --check
+
+    # Unpack to /opt
+    tar -xzf "openjdk-${JAVA17_VERSION}.tar.gz" -C /opt
+
+    # Remove now-unnecessary tarball
+    rm "openjdk-${JAVA17_VERSION}.tar.gz"
+
+    # Smoke test
+    /opt/jdk-${JAVA17_VERSION}/bin/java -version
 EOF
+
+# Install Java 21
+
+ARG JAVA21_VERSION=21.0.10+7
+ARG JAVA21_SHA256=a57fd486c3c24ed615eb91ef9421ddd38c720e7398df5a161872fb26ad825936 # https://api.adoptium.net/v3/assets/latest/21/hotspot?os=linux&architecture=riscv64&image_type=jdk
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Adoptium Temurin JDK 21 binary tarball
+    wget --progress=dot:giga "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jdk_riscv64_linux_hotspot_21.0.10_7.tar.gz" \
+        -O "openjdk-${JAVA21_VERSION}.tar.gz"
+
+    # Verify package integrity
+    echo "${JAVA21_SHA256}  openjdk-${JAVA21_VERSION}.tar.gz" | sha256sum --check
+
+    # Unpack to /opt
+    tar -xzf "openjdk-${JAVA21_VERSION}.tar.gz" -C /opt
+
+    # Remove now-unnecessary tarball
+    rm "openjdk-${JAVA21_VERSION}.tar.gz"
+
+    # Smoke test
+    /opt/jdk-${JAVA21_VERSION}/bin/java -version
+EOF
+
+# Install Java 25
+
+ARG JAVA25_VERSION=25.0.2+10
+ARG JAVA25_SHA256=168119e4fba350f4e6b3ca92450a2b90a8502b89a235a04415e9adf9f5d3164e # https://api.adoptium.net/v3/assets/latest/25/hotspot?os=linux&architecture=riscv64&image_type=jdk
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Adoptium Temurin JDK 25 binary tarball
+    wget --progress=dot:giga "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.2%2B10/OpenJDK25U-jdk_riscv64_linux_hotspot_25.0.2_10.tar.gz" \
+        -O "openjdk-${JAVA25_VERSION}.tar.gz"
+
+    # Verify package integrity
+    echo "${JAVA25_SHA256}  openjdk-${JAVA25_VERSION}.tar.gz" | sha256sum --check
+
+    # Unpack to /opt
+    tar -xzf "openjdk-${JAVA25_VERSION}.tar.gz" -C /opt
+
+    # Remove now-unnecessary tarball
+    rm "openjdk-${JAVA25_VERSION}.tar.gz"
+
+    # Smoke test
+    /opt/jdk-${JAVA25_VERSION}/bin/java -version
+EOF
+
+ENV JAVA_HOME_17_RISCV64=/opt/jdk-${JAVA17_VERSION}
+ENV JAVA_HOME_21_RISCV64=/opt/jdk-${JAVA21_VERSION}
+ENV JAVA_HOME_25_RISCV64=/opt/jdk-${JAVA25_VERSION}
+ENV JAVA_HOME=${JAVA_HOME_25_RISCV64}
+ENV PATH=${JAVA_HOME}/bin:${PATH}
+
+# Install Apache Ant
+
+ARG ANT_VERSION=1.10.14
+ARG ANT_SHA512=4e74b382dd8271f9eac9fef69ba94751fb8a8356dbd995c4d642f2dad33de77bd37d4001d6c8f4f0ef6789529754968f0c1b6376668033c8904c6ec84543332a # https://archive.apache.org/dist/ant/binaries
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Apache Ant binary tarball
+    wget --progress=dot:giga https://archive.apache.org/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz
+
+    # Verify package integrity
+    echo "${ANT_SHA512}  apache-ant-${ANT_VERSION}-bin.tar.gz" | sha512sum --check
+
+    # Unpack to /opt
+    tar -xzf apache-ant-${ANT_VERSION}-bin.tar.gz -C /opt
+
+    # Smoke test
+    /opt/apache-ant-${ANT_VERSION}/bin/ant -version
+EOF
+
+ENV ANT_HOME=/opt/apache-ant-${ANT_VERSION}
+ENV PATH=${ANT_HOME}/bin:${PATH}
+
+# Install Gradle
+
+ARG GRADLE_VERSION=9.3.1
+ARG GRADLE_SHA256=b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06 # https://services.gradle.org/distributions
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Gradle binary zip
+    wget --progress=dot:giga https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
+
+    # Verify package integrity
+    echo "${GRADLE_SHA256}  gradle-${GRADLE_VERSION}-bin.zip" | sha256sum --check
+
+    # Unpack to /opt
+    unzip -q gradle-${GRADLE_VERSION}-bin.zip -d /opt
+
+    # Remove now-unnecessary zip
+    rm gradle-${GRADLE_VERSION}-bin.zip
+
+    # Smoke test
+    /opt/gradle-${GRADLE_VERSION}/bin/gradle --version
+EOF
+
+ENV GRADLE_HOME=/opt/gradle-${GRADLE_VERSION}
+ENV PATH=${GRADLE_HOME}/bin:${PATH}
+
+# Install Apache Maven
+
+ARG MAVEN_VERSION=3.9.12
+ARG MAVEN_SHA512=0a1be79f02466533fc1a80abbef8796e4f737c46c6574ede5658b110899942a94db634477dfd3745501c80aef9aac0d4f841d38574373f7e2d24cce89d694f70 # https://archive.apache.org/dist/maven/maven-3
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Apache Maven binary tarball
+    wget --progress=dot:giga https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+
+    # Verify package integrity
+    echo "${MAVEN_SHA512}  apache-maven-${MAVEN_VERSION}-bin.tar.gz" | sha512sum --check
+
+    # Unpack to /opt
+    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt
+
+    # Remove now-unnecessary tarball
+    rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
+
+    # Smoke test
+    /opt/apache-maven-${MAVEN_VERSION}/bin/mvn --version
+EOF
+
+ENV MAVEN_HOME=/opt/apache-maven-${MAVEN_VERSION}
+ENV PATH=${MAVEN_HOME}/bin:${PATH}
 
 WORKDIR /home/runner
 USER runner
