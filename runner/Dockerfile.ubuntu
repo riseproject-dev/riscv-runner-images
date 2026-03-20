@@ -294,7 +294,86 @@ RUN bash -eux -o pipefail <<'EOF'
         --slave /usr/bin/pip3 pip3 /opt/python-3.14/bin/pip3.14 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.14/bin/pydoc3.14 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.14/bin/python3.14-config
+EOF
 
+# Download Go 1.22
+ARG GO122_VERSION=1.22.12
+ARG GO122_SHA256=f03a084aabc812fdc15b29acd5e1ee18e13b3c80be22aec43990119afcaf4947 # https://go.dev/dl/go1.22.12.linux-riscv64.tar.gz
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Go 1.22 pre-built binary
+    wget --progress=dot:giga https://go.dev/dl/go${GO122_VERSION}.linux-riscv64.tar.gz
+
+    # Verify package integrity
+    echo "${GO122_SHA256}  go${GO122_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
+
+    # Unpack and install
+    mkdir -p /opt/go-1.22
+    tar -xzf go${GO122_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.22 --strip-components=1
+    rm go${GO122_VERSION}.linux-riscv64.tar.gz
+EOF
+
+# Download Go 1.23
+ARG GO123_VERSION=1.23.12
+ARG GO123_SHA256=5798eda8c167dd620feb54e1bcca1b4cc014a529821d8c01f31d7e17a43cb8ed # https://go.dev/dl/go1.23.12.linux-riscv64.tar.gz
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Go 1.23 pre-built binary
+    wget --progress=dot:giga https://go.dev/dl/go${GO123_VERSION}.linux-riscv64.tar.gz
+
+    # Verify package integrity
+    echo "${GO123_SHA256}  go${GO123_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
+
+    # Unpack and install
+    mkdir -p /opt/go-1.23
+    tar -xzf go${GO123_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.23 --strip-components=1
+    rm go${GO123_VERSION}.linux-riscv64.tar.gz
+EOF
+
+# Download Go 1.24
+ARG GO124_VERSION=1.24.13
+ARG GO124_SHA256=9a8166261489d3f38c7a568785b7012c123e3561779d282d568a72d58506754f # https://go.dev/dl/go1.24.13.linux-riscv64.tar.gz
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Go 1.24 pre-built binary
+    wget --progress=dot:giga https://go.dev/dl/go${GO124_VERSION}.linux-riscv64.tar.gz
+
+    # Verify package integrity
+    echo "${GO124_SHA256}  go${GO124_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
+
+    # Unpack and install
+    mkdir -p /opt/go-1.24
+    tar -xzf go${GO124_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.24 --strip-components=1
+    rm go${GO124_VERSION}.linux-riscv64.tar.gz
+EOF
+
+# Download Go 1.25
+ARG GO125_VERSION=1.25.7
+ARG GO125_SHA256=88d59c6893c8425875d6eef8e3434bc2fa2552e5ad4c058c6cd8cd710a0301c8 # https://go.dev/dl/go1.25.7.linux-riscv64.tar.gz
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Go 1.25 pre-built binary
+    wget --progress=dot:giga https://go.dev/dl/go${GO125_VERSION}.linux-riscv64.tar.gz
+
+    # Verify package integrity
+    echo "${GO125_SHA256}  go${GO125_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
+
+    # Unpack and install
+    mkdir -p /opt/go-1.25
+    tar -xzf go${GO125_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.25 --strip-components=1
+    rm go${GO125_VERSION}.linux-riscv64.tar.gz
+EOF
+
+# Make Go 1.24 the default go binary
+RUN bash -eux -o pipefail <<'EOF'
+    # Set up update-alternatives for go and gofmt
+    update-alternatives --install /usr/bin/go go /opt/go-1.22/bin/go 22 \
+        --slave /usr/bin/gofmt gofmt /opt/go-1.22/bin/gofmt
+    update-alternatives --install /usr/bin/go go /opt/go-1.23/bin/go 23 \
+        --slave /usr/bin/gofmt gofmt /opt/go-1.23/bin/gofmt
+    update-alternatives --install /usr/bin/go go /opt/go-1.24/bin/go 100 \
+        --slave /usr/bin/gofmt gofmt /opt/go-1.24/bin/gofmt
+    update-alternatives --install /usr/bin/go go /opt/go-1.25/bin/go 25 \
+        --slave /usr/bin/gofmt gofmt /opt/go-1.25/bin/gofmt
+EOF
+
+RUN bash -eux -o pipefail <<'EOF'
     # Add a user which will run the github actions
     useradd -m runner
     # Add runner to sudoers without password prompt
