@@ -17,6 +17,7 @@ GitHub Actions self-hosted runner based on Ubuntu. Available variants:
 
 The runner image includes:
 - [GitHub Actions Runner for RISC-V](https://github.com/alitariq4589/github-runner-riscv) (built with .NET 8)
+- Node.js 20.20.0, 22.22.0, 24.14.0 (default: 20, via `update-alternatives`)
 - Docker CLI, Docker Buildx, Docker Compose
 - git, curl, sudo
 

@@ -380,6 +380,92 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
 EOF
 
+# Install Node.js 20
+
+ARG NODE20_VERSION=20.20.0
+ARG NODE20_SHA256=94be92d02f852b90da3fbf09783840dbcc2e6a1cc5249bd8877cc6260d3a0a89 # https://unofficial-builds.nodejs.org/download/release/v20.20.0/SHASUMS256.txt
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Node.js 20 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE20_VERSION}/node-v${NODE20_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE20_VERSION}.tar.xz"
+
+    # Verify package integrity
+    echo "${NODE20_SHA256}  node-v${NODE20_VERSION}.tar.xz" | sha256sum --check
+
+    # Unpack to /opt
+    tar -xJf "node-v${NODE20_VERSION}.tar.xz" -C /opt
+    mv /opt/node-v${NODE20_VERSION}-linux-riscv64 /opt/node-v${NODE20_VERSION}
+
+    # Remove now-unnecessary tarball
+    rm "node-v${NODE20_VERSION}.tar.xz"
+
+    # Smoke test
+    /opt/node-v${NODE20_VERSION}/bin/node --version
+EOF
+
+# Install Node.js 22
+
+ARG NODE22_VERSION=22.22.0
+ARG NODE22_SHA256=2c7b53d4e8b74ec366dfdd2f21f289f984181da4be88b926d09aad04c7d31745 # https://unofficial-builds.nodejs.org/download/release/v22.22.0/SHASUMS256.txt
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Node.js 22 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE22_VERSION}/node-v${NODE22_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE22_VERSION}.tar.xz"
+
+    # Verify package integrity
+    echo "${NODE22_SHA256}  node-v${NODE22_VERSION}.tar.xz" | sha256sum --check
+
+    # Unpack to /opt
+    tar -xJf "node-v${NODE22_VERSION}.tar.xz" -C /opt
+    mv /opt/node-v${NODE22_VERSION}-linux-riscv64 /opt/node-v${NODE22_VERSION}
+
+    # Remove now-unnecessary tarball
+    rm "node-v${NODE22_VERSION}.tar.xz"
+
+    # Smoke test
+    /opt/node-v${NODE22_VERSION}/bin/node --version
+EOF
+
+# Install Node.js 24
+
+ARG NODE24_VERSION=24.14.0
+ARG NODE24_SHA256=4f6ec0ed931532dfb17c5487ab822a60b732262d2681c77ae436420faef8ed0a # https://unofficial-builds.nodejs.org/download/release/v24.14.0/SHASUMS256.txt
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Node.js 24 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE24_VERSION}/node-v${NODE24_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE24_VERSION}.tar.xz"
+
+    # Verify package integrity
+    echo "${NODE24_SHA256}  node-v${NODE24_VERSION}.tar.xz" | sha256sum --check
+
+    # Unpack to /opt
+    tar -xJf "node-v${NODE24_VERSION}.tar.xz" -C /opt
+    mv /opt/node-v${NODE24_VERSION}-linux-riscv64 /opt/node-v${NODE24_VERSION}
+
+    # Remove now-unnecessary tarball
+    rm "node-v${NODE24_VERSION}.tar.xz"
+
+    # Smoke test
+    /opt/node-v${NODE24_VERSION}/bin/node --version
+EOF
+
+# Configure Node.js default version via update-alternatives (Node.js 20 = default)
+
+RUN bash -eux -o pipefail <<'EOF'
+    update-alternatives --install /usr/bin/node node /opt/node-v${NODE20_VERSION}/bin/node 1000 \
+        --slave /usr/bin/npm npm /opt/node-v${NODE20_VERSION}/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-v${NODE20_VERSION}/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-v${NODE20_VERSION}/bin/corepack
+    update-alternatives --install /usr/bin/node node /opt/node-v${NODE22_VERSION}/bin/node 220 \
+        --slave /usr/bin/npm npm /opt/node-v${NODE22_VERSION}/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-v${NODE22_VERSION}/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-v${NODE22_VERSION}/bin/corepack
+    update-alternatives --install /usr/bin/node node /opt/node-v${NODE24_VERSION}/bin/node 240 \
+        --slave /usr/bin/npm npm /opt/node-v${NODE24_VERSION}/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-v${NODE24_VERSION}/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-v${NODE24_VERSION}/bin/corepack
+EOF
+
 WORKDIR /home/runner
 USER runner
 
