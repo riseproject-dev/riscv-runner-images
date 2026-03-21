@@ -1,16 +1,30 @@
 
-# Build Python build image, to be used to build various Python versions
+# Base builder image with common download tools
 
 ARG OS_VERSION=latest
-FROM docker.io/ubuntu:${OS_VERSION} AS python-builder
+FROM docker.io/ubuntu:${OS_VERSION} AS base-builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN bash -eux -o pipefail <<'EOF'
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
-        build-essential \
         ca-certificates \
+        unzip \
+        wget \
+     && true
+
+  rm -rf /var/lib/apt/lists/*
+EOF
+
+# Build Python build image, to be used to build various Python versions
+
+FROM base-builder AS python-builder
+
+RUN bash -eux -o pipefail <<'EOF'
+    apt-get update -qq
+    apt-get install -qq -y --no-install-recommends \
+        build-essential \
         gcc \
         g++ \
         libbz2-dev \
@@ -27,7 +41,6 @@ RUN bash -eux -o pipefail <<'EOF'
         pkg-config \
         tk-dev \
         uuid-dev \
-        wget \
         zlib1g-dev \
      && true
 
@@ -209,6 +222,209 @@ RUN bash -eux -o pipefail <<'EOF'
     /opt/python-3.14/bin/python3.14 --version
 EOF
 
+# Download Go 1.22
+FROM base-builder AS go-1.22
+
+ARG GO122_VERSION=1.22.12
+ARG GO122_SHA256=f03a084aabc812fdc15b29acd5e1ee18e13b3c80be22aec43990119afcaf4947 # https://go.dev/dl/go1.22.12.linux-riscv64.tar.gz
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Go 1.22 pre-built binary
+    wget --progress=dot:giga https://go.dev/dl/go${GO122_VERSION}.linux-riscv64.tar.gz
+
+    # Verify package integrity
+    echo "${GO122_SHA256}  go${GO122_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
+
+    # Unpack and install
+    mkdir -p /opt/go-1.22
+    tar -xzf go${GO122_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.22 --strip-components=1
+    rm go${GO122_VERSION}.linux-riscv64.tar.gz
+EOF
+
+# Download Go 1.23
+FROM base-builder AS go-1.23
+
+ARG GO123_VERSION=1.23.12
+ARG GO123_SHA256=5798eda8c167dd620feb54e1bcca1b4cc014a529821d8c01f31d7e17a43cb8ed # https://go.dev/dl/go1.23.12.linux-riscv64.tar.gz
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Go 1.23 pre-built binary
+    wget --progress=dot:giga https://go.dev/dl/go${GO123_VERSION}.linux-riscv64.tar.gz
+
+    # Verify package integrity
+    echo "${GO123_SHA256}  go${GO123_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
+
+    # Unpack and install
+    mkdir -p /opt/go-1.23
+    tar -xzf go${GO123_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.23 --strip-components=1
+    rm go${GO123_VERSION}.linux-riscv64.tar.gz
+EOF
+
+# Download Go 1.24
+FROM base-builder AS go-1.24
+
+ARG GO124_VERSION=1.24.13
+ARG GO124_SHA256=9a8166261489d3f38c7a568785b7012c123e3561779d282d568a72d58506754f # https://go.dev/dl/go1.24.13.linux-riscv64.tar.gz
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Go 1.24 pre-built binary
+    wget --progress=dot:giga https://go.dev/dl/go${GO124_VERSION}.linux-riscv64.tar.gz
+
+    # Verify package integrity
+    echo "${GO124_SHA256}  go${GO124_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
+
+    # Unpack and install
+    mkdir -p /opt/go-1.24
+    tar -xzf go${GO124_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.24 --strip-components=1
+    rm go${GO124_VERSION}.linux-riscv64.tar.gz
+EOF
+
+# Download Go 1.25
+FROM base-builder AS go-1.25
+
+ARG GO125_VERSION=1.25.7
+ARG GO125_SHA256=88d59c6893c8425875d6eef8e3434bc2fa2552e5ad4c058c6cd8cd710a0301c8 # https://go.dev/dl/go1.25.7.linux-riscv64.tar.gz
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Go 1.25 pre-built binary
+    wget --progress=dot:giga https://go.dev/dl/go${GO125_VERSION}.linux-riscv64.tar.gz
+
+    # Verify package integrity
+    echo "${GO125_SHA256}  go${GO125_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
+
+    # Unpack and install
+    mkdir -p /opt/go-1.25
+    tar -xzf go${GO125_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.25 --strip-components=1
+    rm go${GO125_VERSION}.linux-riscv64.tar.gz
+EOF
+
+# Download Java 17
+FROM base-builder AS java-17
+
+ARG JAVA17_VERSION=17.0.18+8
+ARG JAVA17_SHA256=485f49ec3f7048b466c3b8e5b543932c8aae845a1ba95ebb30fc527019371ed4 # https://api.adoptium.net/v3/assets/latest/17/hotspot?os=linux&architecture=riscv64&image_type=jdk
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Adoptium Temurin JDK 17 binary tarball
+    wget --progress=dot:giga "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.18%2B8/OpenJDK17U-jdk_riscv64_linux_hotspot_17.0.18_8.tar.gz" \
+        -O "openjdk-${JAVA17_VERSION}.tar.gz"
+
+    # Verify package integrity
+    echo "${JAVA17_SHA256}  openjdk-${JAVA17_VERSION}.tar.gz" | sha256sum --check
+
+    # Unpack to /opt/jdk-17
+    mkdir -p /opt/jdk-17
+    tar -xzf "openjdk-${JAVA17_VERSION}.tar.gz" -C /opt/jdk-17 --strip-components=1
+
+    # Remove now-unnecessary tarball
+    rm "openjdk-${JAVA17_VERSION}.tar.gz"
+
+    # Smoke test
+    /opt/jdk-17/bin/java -version
+EOF
+
+# Download Java 21
+FROM base-builder AS java-21
+
+ARG JAVA21_VERSION=21.0.10+7
+ARG JAVA21_SHA256=a57fd486c3c24ed615eb91ef9421ddd38c720e7398df5a161872fb26ad825936 # https://api.adoptium.net/v3/assets/latest/21/hotspot?os=linux&architecture=riscv64&image_type=jdk
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Adoptium Temurin JDK 21 binary tarball
+    wget --progress=dot:giga "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jdk_riscv64_linux_hotspot_21.0.10_7.tar.gz" \
+        -O "openjdk-${JAVA21_VERSION}.tar.gz"
+
+    # Verify package integrity
+    echo "${JAVA21_SHA256}  openjdk-${JAVA21_VERSION}.tar.gz" | sha256sum --check
+
+    # Unpack to /opt/jdk-21
+    mkdir -p /opt/jdk-21
+    tar -xzf "openjdk-${JAVA21_VERSION}.tar.gz" -C /opt/jdk-21 --strip-components=1
+
+    # Remove now-unnecessary tarball
+    rm "openjdk-${JAVA21_VERSION}.tar.gz"
+
+    # Smoke test
+    /opt/jdk-21/bin/java -version
+EOF
+
+# Download Java 25
+FROM base-builder AS java-25
+
+ARG JAVA25_VERSION=25.0.2+10
+ARG JAVA25_SHA256=168119e4fba350f4e6b3ca92450a2b90a8502b89a235a04415e9adf9f5d3164e # https://api.adoptium.net/v3/assets/latest/25/hotspot?os=linux&architecture=riscv64&image_type=jdk
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Adoptium Temurin JDK 25 binary tarball
+    wget --progress=dot:giga "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.2%2B10/OpenJDK25U-jdk_riscv64_linux_hotspot_25.0.2_10.tar.gz" \
+        -O "openjdk-${JAVA25_VERSION}.tar.gz"
+
+    # Verify package integrity
+    echo "${JAVA25_SHA256}  openjdk-${JAVA25_VERSION}.tar.gz" | sha256sum --check
+
+    # Unpack to /opt/jdk-25
+    mkdir -p /opt/jdk-25
+    tar -xzf "openjdk-${JAVA25_VERSION}.tar.gz" -C /opt/jdk-25 --strip-components=1
+
+    # Remove now-unnecessary tarball
+    rm "openjdk-${JAVA25_VERSION}.tar.gz"
+
+    # Smoke test
+    /opt/jdk-25/bin/java -version
+EOF
+
+# Download Apache Ant
+FROM base-builder AS ant
+
+ARG ANT_VERSION=1.10.14
+ARG ANT_SHA512=4e74b382dd8271f9eac9fef69ba94751fb8a8356dbd995c4d642f2dad33de77bd37d4001d6c8f4f0ef6789529754968f0c1b6376668033c8904c6ec84543332a # https://archive.apache.org/dist/ant/binaries
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Apache Ant binary tarball
+    wget --progress=dot:giga https://archive.apache.org/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz
+
+    # Verify package integrity
+    echo "${ANT_SHA512}  apache-ant-${ANT_VERSION}-bin.tar.gz" | sha512sum --check
+
+    # Unpack to /opt/ant-${ANT_VERSION}
+    mkdir -p /opt/ant-${ANT_VERSION}
+    tar -xzf apache-ant-${ANT_VERSION}-bin.tar.gz -C /opt/ant-${ANT_VERSION} --strip-components=1
+
+    # Remove now-unnecessary tarball
+    rm apache-ant-${ANT_VERSION}-bin.tar.gz
+EOF
+
+# Download Gradle
+FROM base-builder AS gradle
+
+ARG GRADLE_VERSION=9.3.1
+ARG GRADLE_SHA256=b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06 # https://services.gradle.org/distributions
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Gradle binary zip
+    wget --progress=dot:giga https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
+
+    # Verify package integrity
+    echo "${GRADLE_SHA256}  gradle-${GRADLE_VERSION}-bin.zip" | sha256sum --check
+
+    # Unpack to /opt
+    unzip -q gradle-${GRADLE_VERSION}-bin.zip -d /opt
+
+    # Remove now-unnecessary zip
+    rm gradle-${GRADLE_VERSION}-bin.zip
+EOF
+
+# Download Apache Maven
+FROM base-builder AS maven
+
+ARG MAVEN_VERSION=3.9.12
+ARG MAVEN_SHA512=0a1be79f02466533fc1a80abbef8796e4f737c46c6574ede5658b110899942a94db634477dfd3745501c80aef9aac0d4f841d38574373f7e2d24cce89d694f70 # https://archive.apache.org/dist/maven/maven-3
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Apache Maven binary tarball
+    wget --progress=dot:giga https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+
+    # Verify package integrity
+    echo "${MAVEN_SHA512}  apache-maven-${MAVEN_VERSION}-bin.tar.gz" | sha512sum --check
+
+    # Unpack to /opt/maven-${MAVEN_VERSION}
+    mkdir -p /opt/maven-${MAVEN_VERSION}
+    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt/maven-${MAVEN_VERSION} --strip-components=1
+
+    # Remove now-unnecessary tarball
+    rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
+EOF
+
 # Build final image
 
 ARG OS_VERSION=latest
@@ -370,69 +586,12 @@ RUN bash -eux -o pipefail <<'EOF'
         --slave /usr/bin/python3-config python3-config /opt/python-3.14/bin/python3.14-config
 EOF
 
-# Download Go 1.22
-ARG GO122_VERSION=1.22.12
-ARG GO122_SHA256=f03a084aabc812fdc15b29acd5e1ee18e13b3c80be22aec43990119afcaf4947 # https://go.dev/dl/go1.22.12.linux-riscv64.tar.gz
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Go 1.22 pre-built binary
-    wget --progress=dot:giga https://go.dev/dl/go${GO122_VERSION}.linux-riscv64.tar.gz
+# Install Go 1.22-1.25
 
-    # Verify package integrity
-    echo "${GO122_SHA256}  go${GO122_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
-
-    # Unpack and install
-    mkdir -p /opt/go-1.22
-    tar -xzf go${GO122_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.22 --strip-components=1
-    rm go${GO122_VERSION}.linux-riscv64.tar.gz
-EOF
-
-# Download Go 1.23
-ARG GO123_VERSION=1.23.12
-ARG GO123_SHA256=5798eda8c167dd620feb54e1bcca1b4cc014a529821d8c01f31d7e17a43cb8ed # https://go.dev/dl/go1.23.12.linux-riscv64.tar.gz
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Go 1.23 pre-built binary
-    wget --progress=dot:giga https://go.dev/dl/go${GO123_VERSION}.linux-riscv64.tar.gz
-
-    # Verify package integrity
-    echo "${GO123_SHA256}  go${GO123_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
-
-    # Unpack and install
-    mkdir -p /opt/go-1.23
-    tar -xzf go${GO123_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.23 --strip-components=1
-    rm go${GO123_VERSION}.linux-riscv64.tar.gz
-EOF
-
-# Download Go 1.24
-ARG GO124_VERSION=1.24.13
-ARG GO124_SHA256=9a8166261489d3f38c7a568785b7012c123e3561779d282d568a72d58506754f # https://go.dev/dl/go1.24.13.linux-riscv64.tar.gz
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Go 1.24 pre-built binary
-    wget --progress=dot:giga https://go.dev/dl/go${GO124_VERSION}.linux-riscv64.tar.gz
-
-    # Verify package integrity
-    echo "${GO124_SHA256}  go${GO124_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
-
-    # Unpack and install
-    mkdir -p /opt/go-1.24
-    tar -xzf go${GO124_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.24 --strip-components=1
-    rm go${GO124_VERSION}.linux-riscv64.tar.gz
-EOF
-
-# Download Go 1.25
-ARG GO125_VERSION=1.25.7
-ARG GO125_SHA256=88d59c6893c8425875d6eef8e3434bc2fa2552e5ad4c058c6cd8cd710a0301c8 # https://go.dev/dl/go1.25.7.linux-riscv64.tar.gz
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Go 1.25 pre-built binary
-    wget --progress=dot:giga https://go.dev/dl/go${GO125_VERSION}.linux-riscv64.tar.gz
-
-    # Verify package integrity
-    echo "${GO125_SHA256}  go${GO125_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
-
-    # Unpack and install
-    mkdir -p /opt/go-1.25
-    tar -xzf go${GO125_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.25 --strip-components=1
-    rm go${GO125_VERSION}.linux-riscv64.tar.gz
-EOF
+COPY --from=go-1.22 /opt/go-1.22 /opt/go-1.22
+COPY --from=go-1.23 /opt/go-1.23 /opt/go-1.23
+COPY --from=go-1.24 /opt/go-1.24 /opt/go-1.24
+COPY --from=go-1.25 /opt/go-1.25 /opt/go-1.25
 
 # Make Go 1.24 the default go binary
 RUN bash -eux -o pipefail <<'EOF'
@@ -447,119 +606,32 @@ RUN bash -eux -o pipefail <<'EOF'
         --slave /usr/bin/gofmt gofmt /opt/go-1.25/bin/gofmt
 EOF
 
-# Install Java 17
+# Install Java 17, 21, 25
 
-ARG JAVA17_VERSION=17.0.18+8
-ARG JAVA17_SHA256=485f49ec3f7048b466c3b8e5b543932c8aae845a1ba95ebb30fc527019371ed4 # https://api.adoptium.net/v3/assets/latest/17/hotspot?os=linux&architecture=riscv64&image_type=jdk
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Adoptium Temurin JDK 17 binary tarball
-    wget --progress=dot:giga "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.18%2B8/OpenJDK17U-jdk_riscv64_linux_hotspot_17.0.18_8.tar.gz" \
-        -O "openjdk-${JAVA17_VERSION}.tar.gz"
+COPY --from=java-17 /opt/jdk-17 /opt/jdk-17
+COPY --from=java-21 /opt/jdk-21 /opt/jdk-21
+COPY --from=java-25 /opt/jdk-25 /opt/jdk-25
 
-    # Verify package integrity
-    echo "${JAVA17_SHA256}  openjdk-${JAVA17_VERSION}.tar.gz" | sha256sum --check
-
-    # Unpack to /opt
-    tar -xzf "openjdk-${JAVA17_VERSION}.tar.gz" -C /opt
-
-    # Remove now-unnecessary tarball
-    rm "openjdk-${JAVA17_VERSION}.tar.gz"
-
-    # Smoke test
-    /opt/jdk-${JAVA17_VERSION}/bin/java -version
-EOF
-
-# Install Java 21
-
-ARG JAVA21_VERSION=21.0.10+7
-ARG JAVA21_SHA256=a57fd486c3c24ed615eb91ef9421ddd38c720e7398df5a161872fb26ad825936 # https://api.adoptium.net/v3/assets/latest/21/hotspot?os=linux&architecture=riscv64&image_type=jdk
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Adoptium Temurin JDK 21 binary tarball
-    wget --progress=dot:giga "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jdk_riscv64_linux_hotspot_21.0.10_7.tar.gz" \
-        -O "openjdk-${JAVA21_VERSION}.tar.gz"
-
-    # Verify package integrity
-    echo "${JAVA21_SHA256}  openjdk-${JAVA21_VERSION}.tar.gz" | sha256sum --check
-
-    # Unpack to /opt
-    tar -xzf "openjdk-${JAVA21_VERSION}.tar.gz" -C /opt
-
-    # Remove now-unnecessary tarball
-    rm "openjdk-${JAVA21_VERSION}.tar.gz"
-
-    # Smoke test
-    /opt/jdk-${JAVA21_VERSION}/bin/java -version
-EOF
-
-# Install Java 25
-
-ARG JAVA25_VERSION=25.0.2+10
-ARG JAVA25_SHA256=168119e4fba350f4e6b3ca92450a2b90a8502b89a235a04415e9adf9f5d3164e # https://api.adoptium.net/v3/assets/latest/25/hotspot?os=linux&architecture=riscv64&image_type=jdk
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Adoptium Temurin JDK 25 binary tarball
-    wget --progress=dot:giga "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.2%2B10/OpenJDK25U-jdk_riscv64_linux_hotspot_25.0.2_10.tar.gz" \
-        -O "openjdk-${JAVA25_VERSION}.tar.gz"
-
-    # Verify package integrity
-    echo "${JAVA25_SHA256}  openjdk-${JAVA25_VERSION}.tar.gz" | sha256sum --check
-
-    # Unpack to /opt
-    tar -xzf "openjdk-${JAVA25_VERSION}.tar.gz" -C /opt
-
-    # Remove now-unnecessary tarball
-    rm "openjdk-${JAVA25_VERSION}.tar.gz"
-
-    # Smoke test
-    /opt/jdk-${JAVA25_VERSION}/bin/java -version
-EOF
-
-ENV JAVA_HOME_17_RISCV64=/opt/jdk-${JAVA17_VERSION}
-ENV JAVA_HOME_21_RISCV64=/opt/jdk-${JAVA21_VERSION}
-ENV JAVA_HOME_25_RISCV64=/opt/jdk-${JAVA25_VERSION}
-ENV JAVA_HOME=${JAVA_HOME_25_RISCV64}
+ENV JAVA_HOME_17_RISCV64=/opt/jdk-17
+ENV JAVA_HOME_21_RISCV64=/opt/jdk-21
+ENV JAVA_HOME_25_RISCV64=/opt/jdk-25
+ENV JAVA_HOME=/opt/jdk-25
 ENV PATH=${JAVA_HOME}/bin:${PATH}
 
 # Install Apache Ant
 
 ARG ANT_VERSION=1.10.14
-ARG ANT_SHA512=4e74b382dd8271f9eac9fef69ba94751fb8a8356dbd995c4d642f2dad33de77bd37d4001d6c8f4f0ef6789529754968f0c1b6376668033c8904c6ec84543332a # https://archive.apache.org/dist/ant/binaries
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Apache Ant binary tarball
-    wget --progress=dot:giga https://archive.apache.org/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz
 
-    # Verify package integrity
-    echo "${ANT_SHA512}  apache-ant-${ANT_VERSION}-bin.tar.gz" | sha512sum --check
+COPY --from=ant /opt/ant-1.10.14 /opt/ant-1.10.14
 
-    # Unpack to /opt
-    tar -xzf apache-ant-${ANT_VERSION}-bin.tar.gz -C /opt
-
-    # Smoke test
-    /opt/apache-ant-${ANT_VERSION}/bin/ant -version
-EOF
-
-ENV ANT_HOME=/opt/apache-ant-${ANT_VERSION}
+ENV ANT_HOME=/opt/ant-${ANT_VERSION}
 ENV PATH=${ANT_HOME}/bin:${PATH}
 
 # Install Gradle
 
 ARG GRADLE_VERSION=9.3.1
-ARG GRADLE_SHA256=b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06 # https://services.gradle.org/distributions
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Gradle binary zip
-    wget --progress=dot:giga https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
 
-    # Verify package integrity
-    echo "${GRADLE_SHA256}  gradle-${GRADLE_VERSION}-bin.zip" | sha256sum --check
-
-    # Unpack to /opt
-    unzip -q gradle-${GRADLE_VERSION}-bin.zip -d /opt
-
-    # Remove now-unnecessary zip
-    rm gradle-${GRADLE_VERSION}-bin.zip
-
-    # Smoke test
-    /opt/gradle-${GRADLE_VERSION}/bin/gradle --version
-EOF
+COPY --from=gradle /opt/gradle-9.3.1 /opt/gradle-9.3.1
 
 ENV GRADLE_HOME=/opt/gradle-${GRADLE_VERSION}
 ENV PATH=${GRADLE_HOME}/bin:${PATH}
@@ -567,25 +639,10 @@ ENV PATH=${GRADLE_HOME}/bin:${PATH}
 # Install Apache Maven
 
 ARG MAVEN_VERSION=3.9.12
-ARG MAVEN_SHA512=0a1be79f02466533fc1a80abbef8796e4f737c46c6574ede5658b110899942a94db634477dfd3745501c80aef9aac0d4f841d38574373f7e2d24cce89d694f70 # https://archive.apache.org/dist/maven/maven-3
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Apache Maven binary tarball
-    wget --progress=dot:giga https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
 
-    # Verify package integrity
-    echo "${MAVEN_SHA512}  apache-maven-${MAVEN_VERSION}-bin.tar.gz" | sha512sum --check
+COPY --from=maven /opt/maven-3.9.12 /opt/maven-3.9.12
 
-    # Unpack to /opt
-    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt
-
-    # Remove now-unnecessary tarball
-    rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
-
-    # Smoke test
-    /opt/apache-maven-${MAVEN_VERSION}/bin/mvn --version
-EOF
-
-ENV MAVEN_HOME=/opt/apache-maven-${MAVEN_VERSION}
+ENV MAVEN_HOME=/opt/maven-${MAVEN_VERSION}
 ENV PATH=${MAVEN_HOME}/bin:${PATH}
 
 WORKDIR /home/runner
