@@ -12,6 +12,7 @@ RUN bash -eux -o pipefail <<'EOF'
         ca-certificates \
         unzip \
         wget \
+        xz-utils \
      && true
 
   rm -rf /var/lib/apt/lists/*
@@ -425,6 +426,78 @@ RUN bash -eux -o pipefail <<'EOF'
     rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
 EOF
 
+# Download Node.js 20
+FROM base-builder AS node-20
+
+ARG NODE20_VERSION=20.20.0
+ARG NODE20_SHA256=94be92d02f852b90da3fbf09783840dbcc2e6a1cc5249bd8877cc6260d3a0a89 # https://unofficial-builds.nodejs.org/download/release/v20.20.0/SHASUMS256.txt
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Node.js 20 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE20_VERSION}/node-v${NODE20_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE20_VERSION}.tar.xz"
+
+    # Verify package integrity
+    echo "${NODE20_SHA256}  node-v${NODE20_VERSION}.tar.xz" | sha256sum --check
+
+    # Unpack to /opt/node-20
+    mkdir -p /opt/node-20
+    tar -xJf "node-v${NODE20_VERSION}.tar.xz" -C /opt/node-20 --strip-components 1
+
+    # Remove now-unnecessary tarball
+    rm "node-v${NODE20_VERSION}.tar.xz"
+
+    # Smoke test
+    /opt/node-20/bin/node --version
+EOF
+
+# Download Node.js 22
+FROM base-builder AS node-22
+
+ARG NODE22_VERSION=22.22.0
+ARG NODE22_SHA256=2c7b53d4e8b74ec366dfdd2f21f289f984181da4be88b926d09aad04c7d31745 # https://unofficial-builds.nodejs.org/download/release/v22.22.0/SHASUMS256.txt
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Node.js 22 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE22_VERSION}/node-v${NODE22_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE22_VERSION}.tar.xz"
+
+    # Verify package integrity
+    echo "${NODE22_SHA256}  node-v${NODE22_VERSION}.tar.xz" | sha256sum --check
+
+    # Unpack to /opt/node-22
+    mkdir -p /opt/node-22
+    tar -xJf "node-v${NODE22_VERSION}.tar.xz" -C /opt/node-22 --strip-components 1
+
+    # Remove now-unnecessary tarball
+    rm "node-v${NODE22_VERSION}.tar.xz"
+
+    # Smoke test
+    /opt/node-22/bin/node --version
+EOF
+
+# Download Node.js 24
+FROM base-builder AS node-24
+
+ARG NODE24_VERSION=24.14.0
+ARG NODE24_SHA256=4f6ec0ed931532dfb17c5487ab822a60b732262d2681c77ae436420faef8ed0a # https://unofficial-builds.nodejs.org/download/release/v24.14.0/SHASUMS256.txt
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Node.js 24 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE24_VERSION}/node-v${NODE24_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE24_VERSION}.tar.xz"
+
+    # Verify package integrity
+    echo "${NODE24_SHA256}  node-v${NODE24_VERSION}.tar.xz" | sha256sum --check
+
+    # Unpack to /opt/node-24
+    mkdir -p /opt/node-24
+    tar -xJf "node-v${NODE24_VERSION}.tar.xz" -C /opt/node-24 --strip-components 1
+
+    # Remove now-unnecessary tarball
+    rm "node-v${NODE24_VERSION}.tar.xz"
+
+    # Smoke test
+    /opt/node-24/bin/node --version
+EOF
+
 # Build final image
 
 ARG OS_VERSION=latest
@@ -645,12 +718,34 @@ COPY --from=maven /opt/maven-3.9.12 /opt/maven-3.9.12
 ENV MAVEN_HOME=/opt/maven-${MAVEN_VERSION}
 ENV PATH=${MAVEN_HOME}/bin:${PATH}
 
+# Install Node 20, 22, 24
+
+COPY --from=node-20 /opt/node-20 /opt/node-20
+COPY --from=node-22 /opt/node-22 /opt/node-22
+COPY --from=node-24 /opt/node-24 /opt/node-24
+
+RUN bash -eux -o pipefail <<'EOF'
+    # Make Node 20 the default version
+    update-alternatives --install /usr/bin/node node /opt/node-20/bin/node 100 \
+        --slave /usr/bin/npm npm /opt/node-20/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-20/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-20/bin/corepack
+    update-alternatives --install /usr/bin/node node /opt/node-22/bin/node 22 \
+        --slave /usr/bin/npm npm /opt/node-22/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-22/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-22/bin/corepack
+    update-alternatives --install /usr/bin/node node /opt/node-24/bin/node 24 \
+        --slave /usr/bin/npm npm /opt/node-24/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-24/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-24/bin/corepack
+EOF
+
+# Setup GitHub runner
+
 WORKDIR /home/runner
 USER runner
 
 ARG RUNNER_VERSION=2.331.0
-
-# Download GitHub runner (replace URL with the latest for your architecture)
 RUN bash -eux -o pipefail <<'EOF'
     curl -L https://github.com/alitariq4589/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz \
         | tar xzf -
