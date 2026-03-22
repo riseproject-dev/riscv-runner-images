@@ -380,8 +380,8 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "${ANT_SHA512}  apache-ant-${ANT_VERSION}-bin.tar.gz" | sha512sum --check
 
     # Unpack to /opt/ant-${ANT_VERSION}
-    mkdir -p /opt/ant-${ANT_VERSION}
-    tar -xzf apache-ant-${ANT_VERSION}-bin.tar.gz -C /opt/ant-${ANT_VERSION} --strip-components=1
+    mkdir -p /opt/ant
+    tar -xzf apache-ant-${ANT_VERSION}-bin.tar.gz -C /opt/ant --strip-components=1
 
     # Remove now-unnecessary tarball
     rm apache-ant-${ANT_VERSION}-bin.tar.gz
@@ -401,6 +401,7 @@ RUN bash -eux -o pipefail <<'EOF'
 
     # Unpack to /opt
     unzip -q gradle-${GRADLE_VERSION}-bin.zip -d /opt
+    mv /opt/gradle-${GRADLE_VERSION} /opt/gradle
 
     # Remove now-unnecessary zip
     rm gradle-${GRADLE_VERSION}-bin.zip
@@ -410,7 +411,7 @@ EOF
 FROM base-builder AS maven
 
 ARG MAVEN_VERSION=3.9.12
-ARG MAVEN_SHA512=0a1be79f02466533fc1a80abbef8796e4f737c46c6574ede5658b110899942a94db634477dfd3745501c80aef9aac0d4f841d38574373f7e2d24cce89d694f70 # https://archive.apache.org/dist/maven/maven-3
+ARG MAVEN_SHA512=0a1be79f02466533fc1a80abbef8796e4f737c46c6574ede5658b110899942a94db634477dfd3745501c80aef9aac0d4f841d38574373f7e2d24cce89d694f70 # https://archive.apache.org/dist/maven/maven-3/3.9.12/binaries/apache-maven-3.9.12-bin.tar.gz.sha512
 RUN bash -eux -o pipefail <<'EOF'
     # Download Apache Maven binary tarball
     wget --progress=dot:giga https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
@@ -418,9 +419,9 @@ RUN bash -eux -o pipefail <<'EOF'
     # Verify package integrity
     echo "${MAVEN_SHA512}  apache-maven-${MAVEN_VERSION}-bin.tar.gz" | sha512sum --check
 
-    # Unpack to /opt/maven-${MAVEN_VERSION}
-    mkdir -p /opt/maven-${MAVEN_VERSION}
-    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt/maven-${MAVEN_VERSION} --strip-components=1
+    # Unpack to /opt/maven
+    mkdir -p /opt/maven
+    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt/maven --strip-components=1
 
     # Remove now-unnecessary tarball
     rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
@@ -707,29 +708,23 @@ ENV PATH=${JAVA_HOME}/bin:${PATH}
 
 # Install Apache Ant
 
-ARG ANT_VERSION=1.10.14
+COPY --from=ant /opt/ant /opt/ant
 
-COPY --from=ant /opt/ant-1.10.14 /opt/ant-1.10.14
-
-ENV ANT_HOME=/opt/ant-${ANT_VERSION}
+ENV ANT_HOME=/opt/ant
 ENV PATH=${ANT_HOME}/bin:${PATH}
 
 # Install Gradle
 
-ARG GRADLE_VERSION=9.3.1
+COPY --from=gradle /opt/gradle /opt/gradle
 
-COPY --from=gradle /opt/gradle-9.3.1 /opt/gradle-9.3.1
-
-ENV GRADLE_HOME=/opt/gradle-${GRADLE_VERSION}
+ENV GRADLE_HOME=/opt/gradle
 ENV PATH=${GRADLE_HOME}/bin:${PATH}
 
 # Install Apache Maven
 
-ARG MAVEN_VERSION=3.9.12
+COPY --from=maven /opt/maven /opt/maven
 
-COPY --from=maven /opt/maven-3.9.12 /opt/maven-3.9.12
-
-ENV MAVEN_HOME=/opt/maven-${MAVEN_VERSION}
+ENV MAVEN_HOME=/opt/maven
 ENV PATH=${MAVEN_HOME}/bin:${PATH}
 
 # Install Node 20, 22, 24
