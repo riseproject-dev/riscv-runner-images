@@ -498,6 +498,20 @@ RUN bash -eux -o pipefail <<'EOF'
     /opt/node-24/bin/node --version
 EOF
 
+# Download Rust 1.94.0
+FROM base-builder as rust
+
+ARG RUSTUP_VERSION=1.28.2
+ARG RUSTTOOLCHAIN_VERSION=1.94.0
+ENV RUSTUP_HOME=/opt/rust/rustup
+ENV CARGO_HOME=/opt/rust/cargo
+RUN bash -eux -o pipefail <<'EOF'
+    wget --progress=dot:giga -O - https://sh.rustup.rs | sh -s -- \
+        -y \
+        --default-toolchain ${RUSTTOOLCHAIN_VERSION} \
+        --component rustfmt
+EOF
+
 # Build final image
 
 ARG OS_VERSION=latest
@@ -739,6 +753,14 @@ RUN bash -eux -o pipefail <<'EOF'
         --slave /usr/bin/npx npx /opt/node-24/bin/npx \
         --slave /usr/bin/corepack corepack /opt/node-24/bin/corepack
 EOF
+
+# Install Rust
+
+COPY --from=rust /opt/rust /opt/rust
+
+ENV RUSTUP_HOME=/opt/rust/rustup
+ENV CARGO_HOME=/opt/rust/cargo
+ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
 
 # Setup GitHub runner
 
