@@ -583,6 +583,24 @@ RUN bash -eux -o pipefail <<'EOF'
         --component rustfmt
 EOF
 
+# Dockerload docker-compose v2 2.38.2
+FROM base-builder as docker-compose
+
+ARG DOCKERCOMPOSE_VERSION=2.38.2
+ARG DOCKERCOMPOSE_SHA256=67c65c4015db38b526b262cee9d98915f8fcb56b42be7926a21a7ec2ec0c3d2c
+RUN bash -eux -o pipefail <<'EOF'
+    # Download docker-compose v2 2.38.2
+    mkdir -p /usr/local/lib/docker/cli-plugins
+    wget --progress=dot:giga "https://github.com/docker/compose/releases/download/v${DOCKERCOMPOSE_VERSION}/docker-compose-linux-riscv64" \
+        -O "/usr/local/lib/docker/cli-plugins/docker-compose"
+
+    # Verify package integrity
+    echo "${DOCKERCOMPOSE_SHA256} /usr/local/lib/docker/cli-plugins/docker-compose" | sha256sum --check
+
+    # Fix permissions on the file
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+EOF
+
 # Build final image
 
 ARG OS_VERSION=latest
@@ -839,6 +857,10 @@ COPY --from=rust /opt/rust /opt/rust
 ENV RUSTUP_HOME=/opt/rust/rustup
 ENV CARGO_HOME=/opt/rust/cargo
 ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
+
+# Install Docker CLI Plugins
+
+COPY --from=docker-compose /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Setup GitHub runner
 
