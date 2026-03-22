@@ -12,6 +12,7 @@ RUN bash -eux -o pipefail <<'EOF'
         ca-certificates \
         unzip \
         wget \
+        xz-utils \
      && true
 
   rm -rf /var/lib/apt/lists/*
@@ -76,7 +77,7 @@ RUN bash -eux -o pipefail <<'EOF'
     popd
 
     # Remove now-unnecessary source directory
-    rm -rf Python-${PYTHON310_VERSION}
+    rm -rf Python-${PYTHON310_VERSION} Python-${PYTHON310_VERSION}.tgz
 
     # Smoke test
     /opt/python-3.10/bin/python3.10 --version
@@ -111,7 +112,7 @@ RUN bash -eux -o pipefail <<'EOF'
     popd
 
     # Remove now-unnecessary source directory
-    rm -rf Python-${PYTHON311_VERSION}
+    rm -rf Python-${PYTHON311_VERSION} Python-${PYTHON311_VERSION}.tgz
 
     # Smoke test
     /opt/python-3.11/bin/python3.11 --version
@@ -146,7 +147,7 @@ RUN bash -eux -o pipefail <<'EOF'
     popd
 
     # Remove now-unnecessary source directory
-    rm -rf Python-${PYTHON312_VERSION}
+    rm -rf Python-${PYTHON312_VERSION} Python-${PYTHON312_VERSION}.tgz
 
     # Smoke test
     /opt/python-3.12/bin/python3.12 --version
@@ -181,10 +182,45 @@ RUN bash -eux -o pipefail <<'EOF'
     popd
 
     # Remove now-unnecessary source directory
-    rm -rf Python-${PYTHON313_VERSION}
+    rm -rf Python-${PYTHON313_VERSION} Python-${PYTHON313_VERSION}.tgz
 
     # Smoke test
     /opt/python-3.13/bin/python3.13 --version
+EOF
+
+# Build Python 3.13 (free threaded)
+FROM python-builder AS python-3.13t
+
+ARG PYTHON313_VERSION=3.13.12
+ARG PYTHON313_SHA256=12e7cb170ad2d1a69aee96a1cc7fc8de5b1e97a2bdac51683a3db016ec9a2996 # https://www.python.org/downloads/release/python-31312
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Python 3.13 source tarball
+    wget --progress=dot:giga https://www.python.org/ftp/python/${PYTHON313_VERSION}/Python-${PYTHON313_VERSION}.tgz
+
+    # Verify package integrity
+    echo "${PYTHON313_SHA256}  Python-${PYTHON313_VERSION}.tgz" | sha256sum --check
+
+    # Unpack source tar file
+    tar -xzf Python-${PYTHON313_VERSION}.tgz
+    pushd Python-${PYTHON313_VERSION}
+
+    # Configure & Build
+    ./configure --prefix=/opt/python-3.13t --with-ensurepip=install --disable-test-modules --enable-shared --disable-gil
+    make -j$(nproc)
+
+    # Install without conflicting with other versions of Python
+    make altinstall
+
+    # Fix RPATH for python3.13 executable
+    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.13t/bin/python3.13
+
+    popd
+
+    # Remove now-unnecessary source directory
+    rm -rf Python-${PYTHON313_VERSION} Python-${PYTHON313_VERSION}.tgz
+
+    # Smoke test
+    /opt/python-3.13t/bin/python3.13 --version
 EOF
 
 # Build Python 3.14
@@ -216,10 +252,45 @@ RUN bash -eux -o pipefail <<'EOF'
     popd
 
     # Remove now-unnecessary source directory
-    rm -rf Python-${PYTHON314_VERSION}
+    rm -rf Python-${PYTHON314_VERSION} Python-${PYTHON314_VERSION}.tgz
 
     # Smoke test
     /opt/python-3.14/bin/python3.14 --version
+EOF
+
+# Build Python 3.14 (free threaded)
+FROM python-builder AS python-3.14t
+
+ARG PYTHON314_VERSION=3.14.3
+ARG PYTHON314_SHA256=d7fe130d0501ae047ca318fa92aa642603ab6f217901015a1df6ce650d5470cd # https://www.python.org/downloads/release/python-3143
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Python 3.14 source tarball
+    wget --progress=dot:giga https://www.python.org/ftp/python/${PYTHON314_VERSION}/Python-${PYTHON314_VERSION}.tgz
+
+    # Verify package integrity
+    echo "${PYTHON314_SHA256}  Python-${PYTHON314_VERSION}.tgz" | sha256sum --check
+
+    # Unpack source tar file
+    tar -xzf Python-${PYTHON314_VERSION}.tgz
+    pushd Python-${PYTHON314_VERSION}
+
+    # Configure & Build
+    ./configure --prefix=/opt/python-3.14t --with-ensurepip=install --disable-test-modules --enable-shared --disable-gil
+    make -j$(nproc)
+
+    # Install without conflicting with other versions of Python
+    make altinstall
+
+    # Fix RPATH for python3.14 executable
+    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.14t/bin/python3.14
+
+    popd
+
+    # Remove now-unnecessary source directory
+    rm -rf Python-${PYTHON314_VERSION} Python-${PYTHON314_VERSION}.tgz
+
+    # Smoke test
+    /opt/python-3.14t/bin/python3.14 --version
 EOF
 
 # Download Go 1.22
@@ -379,8 +450,8 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "${ANT_SHA512}  apache-ant-${ANT_VERSION}-bin.tar.gz" | sha512sum --check
 
     # Unpack to /opt/ant-${ANT_VERSION}
-    mkdir -p /opt/ant-${ANT_VERSION}
-    tar -xzf apache-ant-${ANT_VERSION}-bin.tar.gz -C /opt/ant-${ANT_VERSION} --strip-components=1
+    mkdir -p /opt/ant
+    tar -xzf apache-ant-${ANT_VERSION}-bin.tar.gz -C /opt/ant --strip-components=1
 
     # Remove now-unnecessary tarball
     rm apache-ant-${ANT_VERSION}-bin.tar.gz
@@ -400,6 +471,7 @@ RUN bash -eux -o pipefail <<'EOF'
 
     # Unpack to /opt
     unzip -q gradle-${GRADLE_VERSION}-bin.zip -d /opt
+    mv /opt/gradle-${GRADLE_VERSION} /opt/gradle
 
     # Remove now-unnecessary zip
     rm gradle-${GRADLE_VERSION}-bin.zip
@@ -409,7 +481,7 @@ EOF
 FROM base-builder AS maven
 
 ARG MAVEN_VERSION=3.9.12
-ARG MAVEN_SHA512=0a1be79f02466533fc1a80abbef8796e4f737c46c6574ede5658b110899942a94db634477dfd3745501c80aef9aac0d4f841d38574373f7e2d24cce89d694f70 # https://archive.apache.org/dist/maven/maven-3
+ARG MAVEN_SHA512=0a1be79f02466533fc1a80abbef8796e4f737c46c6574ede5658b110899942a94db634477dfd3745501c80aef9aac0d4f841d38574373f7e2d24cce89d694f70 # https://archive.apache.org/dist/maven/maven-3/3.9.12/binaries/apache-maven-3.9.12-bin.tar.gz.sha512
 RUN bash -eux -o pipefail <<'EOF'
     # Download Apache Maven binary tarball
     wget --progress=dot:giga https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
@@ -417,12 +489,98 @@ RUN bash -eux -o pipefail <<'EOF'
     # Verify package integrity
     echo "${MAVEN_SHA512}  apache-maven-${MAVEN_VERSION}-bin.tar.gz" | sha512sum --check
 
-    # Unpack to /opt/maven-${MAVEN_VERSION}
-    mkdir -p /opt/maven-${MAVEN_VERSION}
-    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt/maven-${MAVEN_VERSION} --strip-components=1
+    # Unpack to /opt/maven
+    mkdir -p /opt/maven
+    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt/maven --strip-components=1
 
     # Remove now-unnecessary tarball
     rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
+EOF
+
+# Download Node.js 20
+FROM base-builder AS node-20
+
+ARG NODE20_VERSION=20.20.0
+ARG NODE20_SHA256=94be92d02f852b90da3fbf09783840dbcc2e6a1cc5249bd8877cc6260d3a0a89 # https://unofficial-builds.nodejs.org/download/release/v20.20.0/SHASUMS256.txt
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Node.js 20 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE20_VERSION}/node-v${NODE20_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE20_VERSION}.tar.xz"
+
+    # Verify package integrity
+    echo "${NODE20_SHA256}  node-v${NODE20_VERSION}.tar.xz" | sha256sum --check
+
+    # Unpack to /opt/node-20
+    mkdir -p /opt/node-20
+    tar -xJf "node-v${NODE20_VERSION}.tar.xz" -C /opt/node-20 --strip-components 1
+
+    # Remove now-unnecessary tarball
+    rm "node-v${NODE20_VERSION}.tar.xz"
+
+    # Smoke test
+    /opt/node-20/bin/node --version
+EOF
+
+# Download Node.js 22
+FROM base-builder AS node-22
+
+ARG NODE22_VERSION=22.22.0
+ARG NODE22_SHA256=2c7b53d4e8b74ec366dfdd2f21f289f984181da4be88b926d09aad04c7d31745 # https://unofficial-builds.nodejs.org/download/release/v22.22.0/SHASUMS256.txt
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Node.js 22 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE22_VERSION}/node-v${NODE22_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE22_VERSION}.tar.xz"
+
+    # Verify package integrity
+    echo "${NODE22_SHA256}  node-v${NODE22_VERSION}.tar.xz" | sha256sum --check
+
+    # Unpack to /opt/node-22
+    mkdir -p /opt/node-22
+    tar -xJf "node-v${NODE22_VERSION}.tar.xz" -C /opt/node-22 --strip-components 1
+
+    # Remove now-unnecessary tarball
+    rm "node-v${NODE22_VERSION}.tar.xz"
+
+    # Smoke test
+    /opt/node-22/bin/node --version
+EOF
+
+# Download Node.js 24
+FROM base-builder AS node-24
+
+ARG NODE24_VERSION=24.14.0
+ARG NODE24_SHA256=4f6ec0ed931532dfb17c5487ab822a60b732262d2681c77ae436420faef8ed0a # https://unofficial-builds.nodejs.org/download/release/v24.14.0/SHASUMS256.txt
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Node.js 24 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE24_VERSION}/node-v${NODE24_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE24_VERSION}.tar.xz"
+
+    # Verify package integrity
+    echo "${NODE24_SHA256}  node-v${NODE24_VERSION}.tar.xz" | sha256sum --check
+
+    # Unpack to /opt/node-24
+    mkdir -p /opt/node-24
+    tar -xJf "node-v${NODE24_VERSION}.tar.xz" -C /opt/node-24 --strip-components 1
+
+    # Remove now-unnecessary tarball
+    rm "node-v${NODE24_VERSION}.tar.xz"
+
+    # Smoke test
+    /opt/node-24/bin/node --version
+EOF
+
+# Download Rust 1.94.0
+FROM base-builder as rust
+
+ARG RUSTUP_VERSION=1.28.2
+ARG RUSTTOOLCHAIN_VERSION=1.94.0
+ENV RUSTUP_HOME=/opt/rust/rustup
+ENV CARGO_HOME=/opt/rust/cargo
+RUN bash -eux -o pipefail <<'EOF'
+    wget --progress=dot:giga -O - https://sh.rustup.rs | sh -s -- \
+        -y \
+        --default-toolchain ${RUSTTOOLCHAIN_VERSION} \
+        --component rustfmt
 EOF
 
 # Build final image
@@ -558,8 +716,13 @@ COPY --from=python-3.10 /opt/python-3.10 /opt/python-3.10
 COPY --from=python-3.11 /opt/python-3.11 /opt/python-3.11
 COPY --from=python-3.12 /opt/python-3.12 /opt/python-3.12
 COPY --from=python-3.13 /opt/python-3.13 /opt/python-3.13
+COPY --from=python-3.13t /opt/python-3.13t /opt/python-3.13t
 COPY --from=python-3.14 /opt/python-3.14 /opt/python-3.14
+COPY --from=python-3.14t /opt/python-3.14t /opt/python-3.14t
 
+# python-3.13t and python-3.14t are NOT added to the PATH otherwise there would be duplicated
+# binaries on the PATH.
+# FIXME: figure out whether/how to have the free-threaded versions on the PATH
 ENV PATH=/opt/python-3.10/bin:/opt/python-3.11/bin:/opt/python-3.12/bin:/opt/python-3.13/bin:/opt/python-3.14/bin:${PATH}
 
 RUN bash -eux -o pipefail <<'EOF'
@@ -580,10 +743,18 @@ RUN bash -eux -o pipefail <<'EOF'
         --slave /usr/bin/pip3 pip3 /opt/python-3.13/bin/pip3.13 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.13/bin/pydoc3.13 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.13/bin/python3.13-config
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.13t/bin/python3.13  131 \
+        --slave /usr/bin/pip3 pip3 /opt/python-3.13t/bin/pip3.13 \
+        --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.13t/bin/pydoc3.13 \
+        --slave /usr/bin/python3-config python3-config /opt/python-3.13t/bin/python3.13-config
     update-alternatives --install /usr/bin/python3 python3 /opt/python-3.14/bin/python3.14  140 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.14/bin/pip3.14 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.14/bin/pydoc3.14 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.14/bin/python3.14-config
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.14t/bin/python3.14  141 \
+        --slave /usr/bin/pip3 pip3 /opt/python-3.14t/bin/pip3.14 \
+        --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.14t/bin/pydoc3.14 \
+        --slave /usr/bin/python3-config python3-config /opt/python-3.14t/bin/python3.14-config
 EOF
 
 # Install Go 1.22-1.25
@@ -620,37 +791,61 @@ ENV PATH=${JAVA_HOME}/bin:${PATH}
 
 # Install Apache Ant
 
-ARG ANT_VERSION=1.10.14
+COPY --from=ant /opt/ant /opt/ant
 
-COPY --from=ant /opt/ant-1.10.14 /opt/ant-1.10.14
-
-ENV ANT_HOME=/opt/ant-${ANT_VERSION}
+ENV ANT_HOME=/opt/ant
 ENV PATH=${ANT_HOME}/bin:${PATH}
 
 # Install Gradle
 
-ARG GRADLE_VERSION=9.3.1
+COPY --from=gradle /opt/gradle /opt/gradle
 
-COPY --from=gradle /opt/gradle-9.3.1 /opt/gradle-9.3.1
-
-ENV GRADLE_HOME=/opt/gradle-${GRADLE_VERSION}
+ENV GRADLE_HOME=/opt/gradle
 ENV PATH=${GRADLE_HOME}/bin:${PATH}
 
 # Install Apache Maven
 
-ARG MAVEN_VERSION=3.9.12
+COPY --from=maven /opt/maven /opt/maven
 
-COPY --from=maven /opt/maven-3.9.12 /opt/maven-3.9.12
-
-ENV MAVEN_HOME=/opt/maven-${MAVEN_VERSION}
+ENV MAVEN_HOME=/opt/maven
 ENV PATH=${MAVEN_HOME}/bin:${PATH}
+
+# Install Node 20, 22, 24
+
+COPY --from=node-20 /opt/node-20 /opt/node-20
+COPY --from=node-22 /opt/node-22 /opt/node-22
+COPY --from=node-24 /opt/node-24 /opt/node-24
+
+RUN bash -eux -o pipefail <<'EOF'
+    # Make Node 20 the default version
+    update-alternatives --install /usr/bin/node node /opt/node-20/bin/node 100 \
+        --slave /usr/bin/npm npm /opt/node-20/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-20/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-20/bin/corepack
+    update-alternatives --install /usr/bin/node node /opt/node-22/bin/node 22 \
+        --slave /usr/bin/npm npm /opt/node-22/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-22/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-22/bin/corepack
+    update-alternatives --install /usr/bin/node node /opt/node-24/bin/node 24 \
+        --slave /usr/bin/npm npm /opt/node-24/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-24/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-24/bin/corepack
+EOF
+
+# Install Rust
+
+COPY --from=rust /opt/rust /opt/rust
+
+ENV RUSTUP_HOME=/opt/rust/rustup
+ENV CARGO_HOME=/opt/rust/cargo
+ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
+
+# Setup GitHub runner
 
 WORKDIR /home/runner
 USER runner
 
 ARG RUNNER_VERSION=2.331.0
-
-# Download GitHub runner (replace URL with the latest for your architecture)
 RUN bash -eux -o pipefail <<'EOF'
     curl -L https://github.com/alitariq4589/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz \
         | tar xzf -
