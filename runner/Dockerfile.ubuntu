@@ -188,6 +188,41 @@ RUN bash -eux -o pipefail <<'EOF'
     /opt/python-3.13/bin/python3.13 --version
 EOF
 
+# Build Python 3.13 (free threaded)
+FROM python-builder AS python-3.13t
+
+ARG PYTHON313_VERSION=3.13.12
+ARG PYTHON313_SHA256=12e7cb170ad2d1a69aee96a1cc7fc8de5b1e97a2bdac51683a3db016ec9a2996 # https://www.python.org/downloads/release/python-31312
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Python 3.13 source tarball
+    wget --progress=dot:giga https://www.python.org/ftp/python/${PYTHON313_VERSION}/Python-${PYTHON313_VERSION}.tgz
+
+    # Verify package integrity
+    echo "${PYTHON313_SHA256}  Python-${PYTHON313_VERSION}.tgz" | sha256sum --check
+
+    # Unpack source tar file
+    tar -xzf Python-${PYTHON313_VERSION}.tgz
+    pushd Python-${PYTHON313_VERSION}
+
+    # Configure & Build
+    ./configure --prefix=/opt/python-3.13t --with-ensurepip=install --disable-test-modules --enable-shared --disable-gil
+    make -j$(nproc)
+
+    # Install without conflicting with other versions of Python
+    make altinstall
+
+    # Fix RPATH for python3.13 executable
+    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.13t/bin/python3.13
+
+    popd
+
+    # Remove now-unnecessary source directory
+    rm -rf Python-${PYTHON313_VERSION} Python-${PYTHON313_VERSION}.tgz
+
+    # Smoke test
+    /opt/python-3.13t/bin/python3.13 --version
+EOF
+
 # Build Python 3.14
 FROM python-builder AS python-3.14
 
@@ -221,6 +256,41 @@ RUN bash -eux -o pipefail <<'EOF'
 
     # Smoke test
     /opt/python-3.14/bin/python3.14 --version
+EOF
+
+# Build Python 3.14 (free threaded)
+FROM python-builder AS python-3.14t
+
+ARG PYTHON314_VERSION=3.14.3
+ARG PYTHON314_SHA256=d7fe130d0501ae047ca318fa92aa642603ab6f217901015a1df6ce650d5470cd # https://www.python.org/downloads/release/python-3143
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Python 3.14 source tarball
+    wget --progress=dot:giga https://www.python.org/ftp/python/${PYTHON314_VERSION}/Python-${PYTHON314_VERSION}.tgz
+
+    # Verify package integrity
+    echo "${PYTHON314_SHA256}  Python-${PYTHON314_VERSION}.tgz" | sha256sum --check
+
+    # Unpack source tar file
+    tar -xzf Python-${PYTHON314_VERSION}.tgz
+    pushd Python-${PYTHON314_VERSION}
+
+    # Configure & Build
+    ./configure --prefix=/opt/python-3.14t --with-ensurepip=install --disable-test-modules --enable-shared --disable-gil
+    make -j$(nproc)
+
+    # Install without conflicting with other versions of Python
+    make altinstall
+
+    # Fix RPATH for python3.14 executable
+    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.14t/bin/python3.14
+
+    popd
+
+    # Remove now-unnecessary source directory
+    rm -rf Python-${PYTHON314_VERSION} Python-${PYTHON314_VERSION}.tgz
+
+    # Smoke test
+    /opt/python-3.14t/bin/python3.14 --version
 EOF
 
 # Download Go 1.22
@@ -646,8 +716,13 @@ COPY --from=python-3.10 /opt/python-3.10 /opt/python-3.10
 COPY --from=python-3.11 /opt/python-3.11 /opt/python-3.11
 COPY --from=python-3.12 /opt/python-3.12 /opt/python-3.12
 COPY --from=python-3.13 /opt/python-3.13 /opt/python-3.13
+COPY --from=python-3.13t /opt/python-3.13t /opt/python-3.13t
 COPY --from=python-3.14 /opt/python-3.14 /opt/python-3.14
+COPY --from=python-3.14t /opt/python-3.14t /opt/python-3.14t
 
+# python-3.13t and python-3.14t are NOT added to the PATH otherwise there would be duplicated
+# binaries on the PATH.
+# FIXME: figure out whether/how to have the free-threaded versions on the PATH
 ENV PATH=/opt/python-3.10/bin:/opt/python-3.11/bin:/opt/python-3.12/bin:/opt/python-3.13/bin:/opt/python-3.14/bin:${PATH}
 
 RUN bash -eux -o pipefail <<'EOF'
@@ -668,10 +743,18 @@ RUN bash -eux -o pipefail <<'EOF'
         --slave /usr/bin/pip3 pip3 /opt/python-3.13/bin/pip3.13 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.13/bin/pydoc3.13 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.13/bin/python3.13-config
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.13t/bin/python3.13  131 \
+        --slave /usr/bin/pip3 pip3 /opt/python-3.13t/bin/pip3.13 \
+        --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.13t/bin/pydoc3.13 \
+        --slave /usr/bin/python3-config python3-config /opt/python-3.13t/bin/python3.13-config
     update-alternatives --install /usr/bin/python3 python3 /opt/python-3.14/bin/python3.14  140 \
         --slave /usr/bin/pip3 pip3 /opt/python-3.14/bin/pip3.14 \
         --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.14/bin/pydoc3.14 \
         --slave /usr/bin/python3-config python3-config /opt/python-3.14/bin/python3.14-config
+    update-alternatives --install /usr/bin/python3 python3 /opt/python-3.14t/bin/python3.14  141 \
+        --slave /usr/bin/pip3 pip3 /opt/python-3.14t/bin/pip3.14 \
+        --slave /usr/bin/pydoc3 pydoc3 /opt/python-3.14t/bin/pydoc3.14 \
+        --slave /usr/bin/python3-config python3-config /opt/python-3.14t/bin/python3.14-config
 EOF
 
 # Install Go 1.22-1.25
