@@ -67,8 +67,11 @@ jobs:
           build-args: |
             OS_VERSION=${{ matrix.os-version }}
             RUNNER_VERSION=${{ env.RUNNER_VERSION }}
-          cache-from: type=gha,scope=runner-${{ matrix.os }}-${{ matrix.os-version }}
-          cache-to: type=gha,mode=max,scope=runner-${{ matrix.os }}-${{ matrix.os-version }}
+          cache-from: |
+            type=gha,scope=runner-${{ matrix.os }}-${{ matrix.os-version }}-main
+            ${{ github.event_name == 'pull_request' && format('type=gha,scope=type=gha,scope=runner-{0}-{1}-pr-{2}', matrix.os, matrix.os-version, github.event.pull_request.number) || '' }}
+          cache-to: |
+            type=gha,scope=runner-${{ matrix.os }}-${{ matrix.os-version }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main' }},mode=max
           push: ${{ github.repository_owner == 'riseproject-dev' }}
 
   build-dind:
@@ -98,6 +101,9 @@ jobs:
           platforms: linux/riscv64
           context: dind
           tags: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s/riscv-runner:dind${{ github.ref != 'refs/heads/main' && format('-{0}', github.run_number) || '' }}
-          cache-from: type=gha,scope=dind
-          cache-to: type=gha,mode=max,scope=dind
+          cache-from: |
+            type=gha,scope=dind-main
+            ${{ github.event_name == 'pull_request' && format('type=gha,scope=type=gha,scope=dind-pr-{0}', github.event.pull_request.number) || '' }}
+          cache-to: |
+            type=gha,scope=dind-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main' }},mode=max
           push: ${{ github.repository_owner == 'riseproject-dev' }}
