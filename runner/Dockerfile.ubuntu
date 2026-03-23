@@ -740,7 +740,7 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf /var/lib/apt/lists/*
 
     # Add a user which will run the github actions
-    useradd -m runner
+    useradd -m runner # also creates a `runner` group
     # Add runner to sudoers without password prompt
     echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
 EOF
@@ -867,26 +867,27 @@ RUN bash -eux -o pipefail <<'EOF'
         --slave /usr/bin/corepack corepack /opt/node-24/bin/corepack
 EOF
 
-# Install Rust
-
-COPY --from=rust /opt/rust /opt/rust
-
-ENV RUSTUP_HOME=/opt/rust/rustup
-ENV CARGO_HOME=/opt/rust/cargo
-ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
-
 # Install Docker CLI Plugins
 
 COPY --from=docker-compose /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
 COPY --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx
 
-# Setup GitHub runner
-
+# Setup runner user
 WORKDIR /home/runner
 USER runner
 
+# Setup PATH for local installs
 ENV PATH=/home/runner/.local/bin:${PATH}
 
+# Install Rust; it needs a runner user-writable location
+COPY --from=rust --chown=runner:runner /opt/rust/rustup /home/runner/.rustup
+COPY --from=rust --chown=runner:runner /opt/rust/cargo /home/runner/.cargo
+
+ENV RUSTUP_HOME=/home/runner/.rustup
+ENV CARGO_HOME=/home/runner/.cargo
+ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
+
+# Setup GitHub runner
 ARG RUNNER_VERSION=2.331.0
 RUN bash -eux -o pipefail <<'EOF'
     curl -L https://github.com/alitariq4589/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz \
