@@ -601,6 +601,24 @@ RUN bash -eux -o pipefail <<'EOF'
     chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 EOF
 
+# Dockerload docker-buildx 0.32.1
+FROM base-builder as docker-buildx
+
+ARG DOCKERBUILDX_VERSION=0.32.1
+ARG DOCKERBUILDX_SHA256=ff29d3ad8756d11c2fdfddf068d794615d52a2b052b0e2e50edbdbeaf11cbe42
+RUN bash -eux -o pipefail <<'EOF'
+    # Download docker-buildx 0.32.1
+    mkdir -p /usr/local/lib/docker/cli-plugins
+    wget --progress=dot:giga "https://github.com/docker/buildx/releases/download/v${DOCKERBUILDX_VERSION}/buildx-v${DOCKERBUILDX_VERSION}.linux-riscv64" \
+        -O "/usr/local/lib/docker/cli-plugins/docker-buildx"
+
+    # Verify package integrity
+    echo "${DOCKERBUILDX_SHA256} /usr/local/lib/docker/cli-plugins/docker-buildx" | sha256sum --check
+
+    # Fix permissions on the file
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
+EOF
+
 # Build final image
 
 ARG OS_VERSION=latest
@@ -861,6 +879,7 @@ ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
 # Install Docker CLI Plugins
 
 COPY --from=docker-compose /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
+COPY --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx
 
 # Setup GitHub runner
 
