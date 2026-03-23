@@ -645,7 +645,6 @@ RUN bash -eux -o pipefail <<'EOF'
         curl \
         dbus \
         dnsutils \
-        docker-buildx \
         docker-cli \
         docker-compose \
         dpkg \
