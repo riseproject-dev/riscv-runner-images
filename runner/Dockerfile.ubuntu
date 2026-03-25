@@ -918,13 +918,6 @@ COPY --from=gh /opt/gh /opt/gh
 
 ENV PATH=/opt/gh/bin:${PATH}
 
-# Setup runner user
-WORKDIR /home/runner
-USER runner
-
-# Setup PATH for local installs
-ENV PATH=/home/runner/.local/bin:${PATH}
-
 # Install Rust; it needs a runner user-writable location
 COPY --from=rust --chown=runner:runner /opt/rust/rustup /home/runner/.rustup
 COPY --from=rust --chown=runner:runner /opt/rust/cargo /home/runner/.cargo
@@ -932,6 +925,13 @@ COPY --from=rust --chown=runner:runner /opt/rust/cargo /home/runner/.cargo
 ENV RUSTUP_HOME=/home/runner/.rustup
 ENV CARGO_HOME=/home/runner/.cargo
 ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
+
+# Setup PATH for local installs
+ENV PATH=/home/runner/.local/bin:${PATH}
+
+# Setup runner user
+WORKDIR /home/runner
+USER runner
 
 # Setup GitHub runner
 ARG RUNNER_VERSION=2.331.0
