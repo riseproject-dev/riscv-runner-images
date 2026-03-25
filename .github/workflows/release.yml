@@ -30,9 +30,9 @@ jobs:
         - os: ubuntu
           os-version: 24.04
           runs-on: ubuntu-24.04-riscv
-        - os: ubuntu
-          os-version: 26.04
-          runs-on: ubuntu-latest # ubuntu-26.04-riscv-rva23 # Ubuntu 26.04 requires RVA23 hardware to run
+        # - os: ubuntu
+        #   os-version: 26.04
+        #   runs-on: ubuntu-latest # ubuntu-26.04-riscv-rva23 # Ubuntu 26.04 requires RVA23 hardware to run
     runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
