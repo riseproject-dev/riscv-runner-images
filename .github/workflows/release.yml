@@ -13,14 +13,16 @@ on:
   push:
     branches:
       - main
+      - staging
   pull_request:
     branches:
-      - main
+      - staging
   workflow_dispatch:
 
 env:
   REGISTRY: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s
   IMAGE: riscv-runner
+  RELEASE_ENVIRONMENT: ${{ (github.ref == 'refs/heads/main' && 'prod') || (github.ref == 'refs/heads/staging' && 'staging') || '' }}
 
 jobs:
   build-runner:
@@ -110,3 +112,16 @@ jobs:
           cache-to: |
             type=gha,scope=dind-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main' }},mode=max
           push: ${{ github.repository_owner == 'riseproject-dev' }}
+
+  deploy:
+    if: github.repository_owner == 'riseproject-dev' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+    runs-on: ubuntu-latest
+    needs: [build-runner, build-dind]
+    steps:
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.K8S_KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - run: kubectl rollout restart daemonset/rise-riscv-runner-device-plugin -n kube-system
