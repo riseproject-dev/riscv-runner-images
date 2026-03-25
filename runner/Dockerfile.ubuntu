@@ -590,7 +590,7 @@ RUN bash -eux -o pipefail <<'EOF'
 EOF
 
 # Download Rust 1.94.0
-FROM base-builder as rust
+FROM base-builder AS rust
 
 ARG RUSTUP_VERSION=1.28.2
 ARG RUSTTOOLCHAIN_VERSION=1.94.0
@@ -604,7 +604,7 @@ RUN bash -eux -o pipefail <<'EOF'
 EOF
 
 # Dockerload docker-compose v2 2.38.2
-FROM base-builder as docker-compose
+FROM base-builder AS docker-compose
 
 ARG DOCKERCOMPOSE_VERSION=2.38.2
 ARG DOCKERCOMPOSE_SHA256=67c65c4015db38b526b262cee9d98915f8fcb56b42be7926a21a7ec2ec0c3d2c
@@ -622,7 +622,7 @@ RUN bash -eux -o pipefail <<'EOF'
 EOF
 
 # Download docker-buildx 0.32.1
-FROM base-builder as docker-buildx
+FROM base-builder AS docker-buildx
 
 ARG DOCKERBUILDX_VERSION=0.32.1
 ARG DOCKERBUILDX_SHA256=ff29d3ad8756d11c2fdfddf068d794615d52a2b052b0e2e50edbdbeaf11cbe42
@@ -640,7 +640,7 @@ RUN bash -eux -o pipefail <<'EOF'
 EOF
 
 # Download GitHub CLI v2.87.3
-FROM go-1.26 as gh
+FROM go-1.26 AS gh
 
 ARG GH_VERSION=2.87.3
 RUN bash -eux -o pipefail <<'EOF'
