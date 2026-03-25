@@ -124,4 +124,6 @@ jobs:
           echo "${{ secrets.K8S_KUBECONFIG }}" > ~/.kube/config
           chmod 600 ~/.kube/config
 
-      - run: kubectl rollout restart daemonset/rise-riscv-runner-device-plugin -n kube-system
+      - run: |
+          kubectl rollout restart daemonset/rise-riscv-runner-device-plugin -n kube-system
+          kubectl rollout status daemonset/rise-riscv-runner-device-plugin -n kube-system --watch
