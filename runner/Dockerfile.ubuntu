@@ -639,13 +639,13 @@ RUN bash -eux -o pipefail <<'EOF'
     chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
 EOF
 
-# Download GitHub CLI v2.87.3
+# Build GitHub CLI v2.87.3
 FROM go-1.26 AS gh
 
 ARG GH_VERSION=2.87.3
 RUN bash -eux -o pipefail <<'EOF'
     # Download GitHub CLI v2.87.3
-    git clone https://github.com/cli/cli.git -b v${GH_VERSION}
+    git clone --recurse-submodules --depth 1 https://github.com/cli/cli.git -b v${GH_VERSION}
     pushd cli
 
     # Make sure Go 1.26 is on the PATH
@@ -657,6 +657,28 @@ RUN bash -eux -o pipefail <<'EOF'
 
     # Smoke test
     /opt/gh/bin/gh version
+EOF
+
+# Build kubernetes 1.35.2
+FROM go-1.26 AS kubernetes
+
+ARG KUBECTL_VERSION=1.35.2
+RUN bash -eux -o pipefail <<'EOF'
+    # Download kubernetes v1.35.2
+    git clone --recurse-submodules --depth 1 https://github.com/kubernetes/kubernetes.git -b v${KUBECTL_VERSION}
+    pushd kubernetes
+
+    # Make sure Go 1.26 is on the PATH
+    export PATH=/opt/go-1.26/bin:${PATH}
+    go version
+
+    # Install to /opt/kubernetes
+    make WHAT="cmd/kubectl"
+    mkdir -p /opt/kubernetes/bin
+    cp _output/local/go/bin/* /opt/kubernetes/bin/
+
+    # Smoke test
+    /opt/kubernetes/bin/kubectl version --client
 EOF
 
 # Build final image
@@ -833,14 +855,12 @@ RUN bash -eux -o pipefail <<'EOF'
 EOF
 
 # Install Go 1.22-1.25
-
 COPY --from=go-1.22 /opt/go-1.22 /opt/go-1.22
 COPY --from=go-1.23 /opt/go-1.23 /opt/go-1.23
 COPY --from=go-1.24 /opt/go-1.24 /opt/go-1.24
 COPY --from=go-1.25 /opt/go-1.25 /opt/go-1.25
-
-# Make Go 1.24 the default go binary
 RUN bash -eux -o pipefail <<'EOF'
+    # Make Go 1.24 the default go binary
     # Set up update-alternatives for go and gofmt
     update-alternatives --install /usr/bin/go go /opt/go-1.22/bin/go 22 \
         --slave /usr/bin/gofmt gofmt /opt/go-1.22/bin/gofmt
@@ -853,11 +873,9 @@ RUN bash -eux -o pipefail <<'EOF'
 EOF
 
 # Install Java 17, 21, 25
-
 COPY --from=java-17 /opt/jdk-17 /opt/jdk-17
 COPY --from=java-21 /opt/jdk-21 /opt/jdk-21
 COPY --from=java-25 /opt/jdk-25 /opt/jdk-25
-
 ENV JAVA_HOME_17_RISCV64=/opt/jdk-17
 ENV JAVA_HOME_21_RISCV64=/opt/jdk-21
 ENV JAVA_HOME_25_RISCV64=/opt/jdk-25
@@ -865,32 +883,24 @@ ENV JAVA_HOME=/opt/jdk-25
 ENV PATH=${JAVA_HOME}/bin:${PATH}
 
 # Install Apache Ant
-
 COPY --from=ant /opt/ant /opt/ant
-
 ENV ANT_HOME=/opt/ant
 ENV PATH=${ANT_HOME}/bin:${PATH}
 
 # Install Gradle
-
 COPY --from=gradle /opt/gradle /opt/gradle
-
 ENV GRADLE_HOME=/opt/gradle
 ENV PATH=${GRADLE_HOME}/bin:${PATH}
 
 # Install Apache Maven
-
 COPY --from=maven /opt/maven /opt/maven
-
 ENV MAVEN_HOME=/opt/maven
 ENV PATH=${MAVEN_HOME}/bin:${PATH}
 
 # Install Node 20, 22, 24
-
 COPY --from=node-20 /opt/node-20 /opt/node-20
 COPY --from=node-22 /opt/node-22 /opt/node-22
 COPY --from=node-24 /opt/node-24 /opt/node-24
-
 RUN bash -eux -o pipefail <<'EOF'
     # Make Node 20 the default version
     update-alternatives --install /usr/bin/node node /opt/node-20/bin/node 100 \
@@ -908,20 +918,20 @@ RUN bash -eux -o pipefail <<'EOF'
 EOF
 
 # Install Docker CLI Plugins
-
 COPY --from=docker-compose /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
 COPY --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx
 
 # Install GitHub CLI
-
 COPY --from=gh /opt/gh /opt/gh
-
 ENV PATH=/opt/gh/bin:${PATH}
+
+# Install Kubernetes
+COPY --from=kubernetes /opt/kubernetes /opt/kubernetes
+ENV PATH=/opt/kubernetes/bin:${PATH}
 
 # Install Rust; it needs a runner user-writable location
 COPY --from=rust --chown=runner:runner /opt/rust/rustup /home/runner/.rustup
 COPY --from=rust --chown=runner:runner /opt/rust/cargo /home/runner/.cargo
-
 ENV RUSTUP_HOME=/home/runner/.rustup
 ENV CARGO_HOME=/home/runner/.cargo
 ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
