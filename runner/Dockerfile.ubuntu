@@ -10,6 +10,8 @@ RUN bash -eux -o pipefail <<'EOF'
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
         ca-certificates \
+        git \
+        make \
         unzip \
         wget \
         xz-utils \
@@ -365,6 +367,24 @@ RUN bash -eux -o pipefail <<'EOF'
     rm go${GO125_VERSION}.linux-riscv64.tar.gz
 EOF
 
+# Download Go 1.26
+FROM base-builder AS go-1.26
+
+ARG GO126_VERSION=1.26.1
+ARG GO126_SHA256=56f8a63ae986c75e91001d65e17648564a10f0d2b18d696d13c91e459da1abd4 # https://go.dev/dl/go1.26.1.linux-riscv64.tar.gz
+RUN bash -eux -o pipefail <<'EOF'
+    # Download Go 1.26 pre-built binary
+    wget --progress=dot:giga https://go.dev/dl/go${GO126_VERSION}.linux-riscv64.tar.gz
+
+    # Verify package integrity
+    echo "${GO126_SHA256}  go${GO126_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
+
+    # Unpack and install
+    mkdir -p /opt/go-1.26
+    tar -xzf go${GO126_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.26 --strip-components=1
+    rm go${GO126_VERSION}.linux-riscv64.tar.gz
+EOF
+
 # Download Java 17
 FROM base-builder AS java-17
 
@@ -601,7 +621,7 @@ RUN bash -eux -o pipefail <<'EOF'
     chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 EOF
 
-# Dockerload docker-buildx 0.32.1
+# Download docker-buildx 0.32.1
 FROM base-builder as docker-buildx
 
 ARG DOCKERBUILDX_VERSION=0.32.1
@@ -617,6 +637,26 @@ RUN bash -eux -o pipefail <<'EOF'
 
     # Fix permissions on the file
     chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
+EOF
+
+# Download GitHub CLI v2.87.3
+FROM go-1.26 as gh
+
+ARG GH_VERSION=2.87.3
+RUN bash -eux -o pipefail <<'EOF'
+    # Download GitHub CLI v2.87.3
+    git clone https://github.com/cli/cli.git -b v${GH_VERSION}
+    pushd cli
+
+    # Make sure Go 1.26 is on the PATH
+    export PATH=/opt/go-1.26/bin:${PATH}
+    go version
+
+    # Install to /opt/gh
+    make install prefix=/opt/gh
+
+    # Smoke test
+    /opt/gh/bin/gh version
 EOF
 
 # Build final image
@@ -871,6 +911,12 @@ EOF
 
 COPY --from=docker-compose /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
 COPY --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx
+
+# Install GitHub CLI
+
+COPY --from=gh /opt/gh /opt/gh
+
+ENV PATH=/opt/gh/bin:${PATH}
 
 # Setup runner user
 WORKDIR /home/runner
