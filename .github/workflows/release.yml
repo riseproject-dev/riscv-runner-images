@@ -79,7 +79,9 @@ jobs:
           context: runner
           file: runner/Dockerfile.${{ matrix.os }}
           platforms: linux/riscv64
-          tags: ${{ format('{0}/{1}:{2}-{3}-{4}', env.REGISTRY, env.IMAGE, matrix.os, matrix.os-version, needs.resolve.outputs.environment || env.GITHUB_REF_NAME_SLUG) }}
+          tags: |
+            ${{ needs.resolve.outputs.environment == 'main' && format('{0}/{1}:{2}-{3}-latest', env.REGISTRY, env.IMAGE, matrix.os, matrix.os-version) || '' }}
+            ${{ needs.resolve.outputs.environment != 'main' && format('{0}/{1}:{2}-{3}-{4}', env.REGISTRY, env.IMAGE, matrix.os, matrix.os-version, needs.resolve.outputs.environment || env.GITHUB_REF_NAME_SLUG) || '' }}
           build-args: |
             OS_VERSION=${{ matrix.os-version }}
           cache-from: |
@@ -116,7 +118,9 @@ jobs:
         with:
           platforms: linux/riscv64
           context: dind
-          tags: ${{ format('{0}/{1}:dind-{2}', env.REGISTRY, env.IMAGE, needs.resolve.outputs.environment || env.GITHUB_REF_NAME_SLUG) }}
+          tags: |
+            ${{ needs.resolve.outputs.environment == 'main' && format('{0}/{1}:dind-latest', env.REGISTRY, env.IMAGE) || '' }}
+            ${{ needs.resolve.outputs.environment != 'main' && format('{0}/{1}:dind-{2}', env.REGISTRY, env.IMAGE, needs.resolve.outputs.environment || env.GITHUB_REF_NAME_SLUG) || '' }}
           cache-from: |
             type=gha,scope=dind-main
             ${{ github.event_name == 'pull_request' && format('type=gha,scope=type=gha,scope=dind-pr-{0}', github.event.pull_request.number) || '' }}
