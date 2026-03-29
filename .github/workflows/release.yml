@@ -25,6 +25,19 @@ env:
   RELEASE_ENVIRONMENT: ${{ (github.ref == 'refs/heads/main' && 'prod') || (github.ref == 'refs/heads/staging' && 'staging') || '' }}
 
 jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.result }}
+    steps:
+      - id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "result=main" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "result=staging" >> $GITHUB_OUTPUT
+          fi
+
   build-runner:
     strategy:
       matrix:
@@ -36,6 +49,7 @@ jobs:
         #   os-version: 26.04
         #   runs-on: ubuntu-latest # ubuntu-26.04-riscv-rva23 # Ubuntu 26.04 requires RVA23 hardware to run
     runs-on: ${{ matrix.runs-on }}
+    needs: [resolve]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: rlespinasse/github-slug-action@9e7def61550737ba68c62d34a32dd31792e3f429 # v5.5.0
@@ -65,9 +79,7 @@ jobs:
           context: runner
           file: runner/Dockerfile.${{ matrix.os }}
           platforms: linux/riscv64
-          tags: |
-            ${{ github.ref == 'refs/heads/main' && format('{0}/{1}:{2}-{3}-latest', env.REGISTRY, env.IMAGE, matrix.os, matrix.os-version) || '' }}
-            ${{ github.ref != 'refs/heads/main' && format('{0}/{1}:{2}-{3}-{4}', env.REGISTRY, env.IMAGE, matrix.os, matrix.os-version, env.GITHUB_REF_NAME_SLUG) || '' }}
+          tags: ${{ format('{0}/{1}:{2}-{3}-{4}', env.REGISTRY, env.IMAGE, matrix.os, matrix.os-version, needs.resolve.outputs.environment || env.GITHUB_REF_NAME_SLUG) }}
           build-args: |
             OS_VERSION=${{ matrix.os-version }}
           cache-from: |
@@ -79,6 +91,7 @@ jobs:
 
   build-dind:
     runs-on: ubuntu-24.04-riscv
+    needs: [resolve]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: rlespinasse/github-slug-action@9e7def61550737ba68c62d34a32dd31792e3f429 # v5.5.0
@@ -103,9 +116,7 @@ jobs:
         with:
           platforms: linux/riscv64
           context: dind
-          tags: |
-            ${{ github.ref == 'refs/heads/main' && format('{0}/{1}:dind-latest', env.REGISTRY, env.IMAGE) || '' }}
-            ${{ github.ref != 'refs/heads/main' && format('{0}/{1}:dind-{2}', env.REGISTRY, env.IMAGE, env.GITHUB_REF_NAME_SLUG) || '' }}
+          tags: ${{ format('{0}/{1}:dind-{2}', env.REGISTRY, env.IMAGE, needs.resolve.outputs.environment || env.GITHUB_REF_NAME_SLUG) }}
           cache-from: |
             type=gha,scope=dind-main
             ${{ github.event_name == 'pull_request' && format('type=gha,scope=type=gha,scope=dind-pr-{0}', github.event.pull_request.number) || '' }}
@@ -114,9 +125,10 @@ jobs:
           push: ${{ github.repository_owner == 'riseproject-dev' }}
 
   deploy:
-    if: github.repository_owner == 'riseproject-dev' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+    if: github.repository_owner == 'riseproject-dev' && needs.resolve.outputs.environment != ''
     runs-on: ubuntu-latest
-    needs: [build-runner, build-dind]
+    needs: [resolve, build-runner, build-dind]
+    environment: ${{ needs.resolve.outputs.environment }}
     steps:
       - name: Set up kubeconfig
         run: |
