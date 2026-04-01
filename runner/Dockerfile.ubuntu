@@ -700,10 +700,12 @@ RUN bash -eux -o pipefail <<'EOF'
         binutils \
         bison \
         brotli \
+        build-essential \
         bzip2 \
         ca-certificates \
+        ccache \
+        cmake \
         coreutils \
-        curl \
         curl \
         dbus \
         dnsutils \
@@ -718,8 +720,11 @@ RUN bash -eux -o pipefail <<'EOF'
         fonts-noto-color-emoji \
         ftp \
         g++ \
+        g++-14 \
         gcc \
+        gcc-14 \
         git \
+        git-lfs \
         gnupg2 \
         haveged \
         iproute2 \
@@ -777,6 +782,7 @@ RUN bash -eux -o pipefail <<'EOF'
         unzip \
         upx \
         uuid-runtime \
+        wget \
         wget \
         xvfb \
         xz-utils \
