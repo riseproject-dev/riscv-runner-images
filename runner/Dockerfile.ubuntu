@@ -9,9 +9,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN bash -eux -o pipefail <<'EOF'
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
+        build-essential \
         ca-certificates \
+        g++ \
+        gcc \
         git \
+        libssl-dev \
         make \
+        pkg-config \
         unzip \
         wget \
         xz-utils \
@@ -27,9 +32,6 @@ FROM base-builder AS python-builder
 RUN bash -eux -o pipefail <<'EOF'
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
-        build-essential \
-        gcc \
-        g++ \
         libbz2-dev \
         libexpat1-dev \
         libffi-dev \
@@ -38,10 +40,8 @@ RUN bash -eux -o pipefail <<'EOF'
         libncursesw5-dev \
         libreadline-dev \
         libsqlite3-dev \
-        libssl-dev \
         make \
         patchelf \
-        pkg-config \
         tk-dev \
         uuid-dev \
         zlib1g-dev \
@@ -603,6 +603,15 @@ RUN bash -eux -o pipefail <<'EOF'
         --component rustfmt
 EOF
 
+# Build sccache 0.14.0 (with gha caching support)
+FROM rust AS sccache
+
+ARG SCCACHE_VERSION=0.14.0
+RUN bash -eux -o pipefail <<'EOF'
+    export PATH="${CARGO_HOME}/bin:${PATH}"
+    cargo install --no-default-features --features=gha sccache@${SCCACHE_VERSION}
+EOF
+
 # Dockerload docker-compose v2 2.38.2
 FROM base-builder AS docker-compose
 
@@ -783,7 +792,6 @@ RUN bash -eux -o pipefail <<'EOF'
         upx \
         uuid-runtime \
         wget \
-        wget \
         xvfb \
         xz-utils \
         zip \
@@ -941,6 +949,9 @@ COPY --from=rust --chown=runner:runner /opt/rust/cargo /home/runner/.cargo
 ENV RUSTUP_HOME=/home/runner/.rustup
 ENV CARGO_HOME=/home/runner/.cargo
 ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
+
+# Install sccache
+COPY --from=sccache --chown=runner:runner /opt/rust/cargo/bin/sccache ${CARGO_HOME}/bin/sccache
 
 # Setup PATH for local installs
 ENV PATH=/home/runner/.local/bin:${PATH}
