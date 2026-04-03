@@ -985,7 +985,7 @@ USER runner
 # Setup GitHub runner
 ARG RUNNER_VERSION=2.331.0
 RUN bash -eux -o pipefail <<'EOF'
-    curl -L https://github.com/alitariq4589/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz \
+    curl -fsSL https://github.com/alitariq4589/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz \
         | tar xzf -
     # Install dependencies for the runner (if any)
     sudo ./bin/installdependencies.sh
