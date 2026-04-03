@@ -1,8 +1,8 @@
 
-# Base builder image with common download tools
+# Build Python build image, to be used to build various Python versions
 
 ARG OS_VERSION=latest
-FROM docker.io/ubuntu:${OS_VERSION} AS base-builder
+FROM docker.io/ubuntu:${OS_VERSION} AS python-builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -11,28 +11,9 @@ RUN bash -eux -o pipefail <<'EOF'
     apt-get install -qq -y --no-install-recommends \
         build-essential \
         ca-certificates \
-        cmake \
         g++ \
         gcc \
         git \
-        libssl-dev \
-        make \
-        pkg-config \
-        unzip \
-        wget \
-        xz-utils \
-     && true
-
-  rm -rf /var/lib/apt/lists/*
-EOF
-
-# Build Python build image, to be used to build various Python versions
-
-FROM base-builder AS python-builder
-
-RUN bash -eux -o pipefail <<'EOF'
-    apt-get update -qq
-    apt-get install -qq -y --no-install-recommends \
         libbz2-dev \
         libexpat1-dev \
         libffi-dev \
@@ -41,9 +22,14 @@ RUN bash -eux -o pipefail <<'EOF'
         libncursesw5-dev \
         libreadline-dev \
         libsqlite3-dev \
+        libssl-dev \
+        make \
         patchelf \
+        pkg-config \
         tk-dev \
         uuid-dev \
+        wget \
+        xz-utils \
         zlib1g-dev \
      && true
 
@@ -293,6 +279,33 @@ RUN bash -eux -o pipefail <<'EOF'
 
     # Smoke test
     /opt/python-3.14t/bin/python3.14 --version
+EOF
+
+# Base builder image with common download and build tools
+
+ARG OS_VERSION=latest
+FROM docker.io/ubuntu:${OS_VERSION} AS base-builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN bash -eux -o pipefail <<'EOF'
+    apt-get update -qq
+    apt-get install -qq -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        cmake \
+        g++ \
+        gcc \
+        git \
+        libssl-dev \
+        make \
+        pkg-config \
+        unzip \
+        wget \
+        xz-utils \
+     && true
+
+  rm -rf /var/lib/apt/lists/*
 EOF
 
 # Download Go 1.22
