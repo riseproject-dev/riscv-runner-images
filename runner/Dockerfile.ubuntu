@@ -11,6 +11,7 @@ RUN bash -eux -o pipefail <<'EOF'
     apt-get install -qq -y --no-install-recommends \
         build-essential \
         ca-certificates \
+        cmake \
         g++ \
         gcc \
         git \
@@ -40,7 +41,6 @@ RUN bash -eux -o pipefail <<'EOF'
         libncursesw5-dev \
         libreadline-dev \
         libsqlite3-dev \
-        make \
         patchelf \
         tk-dev \
         uuid-dev \
@@ -690,6 +690,24 @@ RUN bash -eux -o pipefail <<'EOF'
     /opt/kubernetes/bin/kubectl version --client
 EOF
 
+# Build ninja 1.13.2
+FROM base-builder AS ninja
+
+ARG NINJA_VERSION=1.13.2
+RUN bash -eux -o pipefail <<'EOF'
+    # Download ninja v1.13.2
+    git clone --recurse-submodules --depth 1 https://github.com/ninja-build/ninja.git -b v${NINJA_VERSION}
+    pushd ninja
+
+    # Install to /opt/ninja
+    cmake -Bbuild -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/opt/ninja
+    cmake --build build
+    cmake --install build
+
+    # Smoke test
+    /opt/ninja/bin/ninja --version
+EOF
+
 # Build final image
 
 ARG OS_VERSION=latest
@@ -942,6 +960,10 @@ ENV PATH=/opt/gh/bin:${PATH}
 # Install Kubernetes
 COPY --from=kubernetes /opt/kubernetes /opt/kubernetes
 ENV PATH=/opt/kubernetes/bin:${PATH}
+
+# Install ninja
+COPY --from=ninja /opt/ninja /opt/ninja
+ENV PATH=/opt/ninja/bin:${PATH}
 
 # Install Rust; it needs a runner user-writable location
 COPY --from=rust --chown=runner:runner /opt/rust/rustup /home/runner/.rustup
