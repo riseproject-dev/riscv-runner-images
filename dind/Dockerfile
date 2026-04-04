@@ -1,7 +1,7 @@
 # Build dockerd + docker-proxy from moby/moby source
 FROM golang:1.24-trixie AS moby-build
 
-ARG MOBY_VERSION=v28.0.4
+ARG MOBY_VERSION=28.0.4
 RUN bash -eux -o pipefail <<'EOF'
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
@@ -12,7 +12,7 @@ RUN bash -eux -o pipefail <<'EOF'
 
     rm -rf /var/lib/apt/lists/*
 
-    git clone --depth 1 --branch "${MOBY_VERSION}" https://github.com/moby/moby.git /moby
+    git clone --depth 1 --branch "v${MOBY_VERSION}" https://github.com/moby/moby.git /moby
     pushd /moby
 
     # hack/make.sh reads these env vars to embed version info and select features.
@@ -32,7 +32,7 @@ EOF
 # Build docker-init (tini) — PID 1 for the entrypoint
 FROM debian:trixie-slim AS tini-build
 
-ARG TINI_VERSION=v0.19.0
+ARG TINI_VERSION=0.19.0
 RUN bash -eux -o pipefail <<'EOF'
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
@@ -47,7 +47,7 @@ RUN bash -eux -o pipefail <<'EOF'
 
     rm -rf /var/lib/apt/lists/*
 
-    git clone --depth 1 --branch "${TINI_VERSION}" https://github.com/krallin/tini.git /tini
+    git clone --depth 1 --branch "v${TINI_VERSION}" https://github.com/krallin/tini.git /tini
     pushd /tini
 
     cmake .
