@@ -366,7 +366,7 @@ EOF
 FROM base-builder AS go-1.25
 
 ARG GO125_VERSION=1.25.8
-ARG GO125_SHA256=88d59c6893c8425875d6eef8e3434bc2fa2552e5ad4c058c6cd8cd710a0301c8 # https://go.dev/dl/go1.25.7.linux-riscv64.tar.gz
+ARG GO125_SHA256=1f90bdfabbbf8060f048186f6355b2fb6a839aab499b61f790f90ee5367b05a5 # https://dl.google.com/go/go1.25.8.linux-riscv64.tar.gz.sha256
 RUN bash -eux -o pipefail <<'EOF'
     # Download Go 1.25 pre-built binary
     wget --progress=dot:giga https://go.dev/dl/go${GO125_VERSION}.linux-riscv64.tar.gz
@@ -494,7 +494,7 @@ EOF
 FROM base-builder AS gradle
 
 ARG GRADLE_VERSION=9.4.1
-ARG GRADLE_SHA256=b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06 # https://services.gradle.org/distributions
+ARG GRADLE_SHA256=2ab2958f2a1e51120c326cad6f385153bb11ee93b3c216c5fccebfdfbb7ec6cb # https://services.gradle.org/distributions/gradle-9.4.1-bin.zip.sha256
 RUN bash -eux -o pipefail <<'EOF'
     # Download Gradle binary zip
     wget --progress=dot:giga https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
@@ -514,7 +514,7 @@ EOF
 FROM base-builder AS maven
 
 ARG MAVEN_VERSION=3.9.14
-ARG MAVEN_SHA512=0a1be79f02466533fc1a80abbef8796e4f737c46c6574ede5658b110899942a94db634477dfd3745501c80aef9aac0d4f841d38574373f7e2d24cce89d694f70 # https://archive.apache.org/dist/maven/maven-3/3.9.12/binaries/apache-maven-3.9.12-bin.tar.gz.sha512
+ARG MAVEN_SHA512=d50af8ab5e6005b46a07f0ce9d3719e67cfdf898da988a84871304cd59fb1af0fef2f99dea709e6e66f21f732f905979b5c2dce6b6860406f60a70e84d9cf0b8 # https://archive.apache.org/dist/maven/maven-3/3.9.14/binaries/apache-maven-3.9.14-bin.tar.gz.sha512
 RUN bash -eux -o pipefail <<'EOF'
     # Download Apache Maven binary tarball
     wget --progress=dot:giga https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
@@ -534,7 +534,7 @@ EOF
 FROM base-builder AS node-20
 
 ARG NODE20_VERSION=20.20.1
-ARG NODE20_SHA256=94be92d02f852b90da3fbf09783840dbcc2e6a1cc5249bd8877cc6260d3a0a89 # https://unofficial-builds.nodejs.org/download/release/v20.20.0/SHASUMS256.txt
+ARG NODE20_SHA256=7cd17b9d99b97e3a8810b430a0f05ea718de2fc3e261fe183d1a1ae91c5e05db # https://unofficial-builds.nodejs.org/download/release/v20.20.1/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
     # Download Node.js 20 binary tarball (unofficial riscv64 build)
     wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE20_VERSION}/node-v${NODE20_VERSION}-linux-riscv64.tar.xz" \
@@ -558,7 +558,7 @@ EOF
 FROM base-builder AS node-22
 
 ARG NODE22_VERSION=22.22.1
-ARG NODE22_SHA256=2c7b53d4e8b74ec366dfdd2f21f289f984181da4be88b926d09aad04c7d31745 # https://unofficial-builds.nodejs.org/download/release/v22.22.0/SHASUMS256.txt
+ARG NODE22_SHA256=a275f69f88f9790d3b8245753cfbed6803fd60b38646a5bedb5febaa97de0b04 # https://unofficial-builds.nodejs.org/download/release/v22.22.1/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
     # Download Node.js 22 binary tarball (unofficial riscv64 build)
     wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE22_VERSION}/node-v${NODE22_VERSION}-linux-riscv64.tar.xz" \
