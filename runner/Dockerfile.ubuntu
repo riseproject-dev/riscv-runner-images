@@ -365,7 +365,7 @@ EOF
 # Download Go 1.25
 FROM base-builder AS go-1.25
 
-ARG GO125_VERSION=1.25.7
+ARG GO125_VERSION=1.25.8
 ARG GO125_SHA256=88d59c6893c8425875d6eef8e3434bc2fa2552e5ad4c058c6cd8cd710a0301c8 # https://go.dev/dl/go1.25.7.linux-riscv64.tar.gz
 RUN bash -eux -o pipefail <<'EOF'
     # Download Go 1.25 pre-built binary
@@ -493,7 +493,7 @@ EOF
 # Download Gradle
 FROM base-builder AS gradle
 
-ARG GRADLE_VERSION=9.3.1
+ARG GRADLE_VERSION=9.4.1
 ARG GRADLE_SHA256=b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06 # https://services.gradle.org/distributions
 RUN bash -eux -o pipefail <<'EOF'
     # Download Gradle binary zip
@@ -513,7 +513,7 @@ EOF
 # Download Apache Maven
 FROM base-builder AS maven
 
-ARG MAVEN_VERSION=3.9.12
+ARG MAVEN_VERSION=3.9.14
 ARG MAVEN_SHA512=0a1be79f02466533fc1a80abbef8796e4f737c46c6574ede5658b110899942a94db634477dfd3745501c80aef9aac0d4f841d38574373f7e2d24cce89d694f70 # https://archive.apache.org/dist/maven/maven-3/3.9.12/binaries/apache-maven-3.9.12-bin.tar.gz.sha512
 RUN bash -eux -o pipefail <<'EOF'
     # Download Apache Maven binary tarball
@@ -533,7 +533,7 @@ EOF
 # Download Node.js 20
 FROM base-builder AS node-20
 
-ARG NODE20_VERSION=20.20.0
+ARG NODE20_VERSION=20.20.1
 ARG NODE20_SHA256=94be92d02f852b90da3fbf09783840dbcc2e6a1cc5249bd8877cc6260d3a0a89 # https://unofficial-builds.nodejs.org/download/release/v20.20.0/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
     # Download Node.js 20 binary tarball (unofficial riscv64 build)
@@ -557,7 +557,7 @@ EOF
 # Download Node.js 22
 FROM base-builder AS node-22
 
-ARG NODE22_VERSION=22.22.0
+ARG NODE22_VERSION=22.22.1
 ARG NODE22_SHA256=2c7b53d4e8b74ec366dfdd2f21f289f984181da4be88b926d09aad04c7d31745 # https://unofficial-builds.nodejs.org/download/release/v22.22.0/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
     # Download Node.js 22 binary tarball (unofficial riscv64 build)
@@ -605,7 +605,7 @@ EOF
 # Download Rust 1.94.0
 FROM base-builder AS rust
 
-ARG RUSTUP_VERSION=1.28.2
+ARG RUSTUP_VERSION=1.29.0
 ARG RUSTTOOLCHAIN_VERSION=1.94.0
 ENV RUSTUP_HOME=/opt/rust/rustup
 ENV CARGO_HOME=/opt/rust/cargo
@@ -664,7 +664,7 @@ EOF
 # Build GitHub CLI v2.87.3
 FROM go-1.26 AS gh
 
-ARG GH_VERSION=2.87.3
+ARG GH_VERSION=2.88.1
 RUN bash -eux -o pipefail <<'EOF'
     # Download GitHub CLI v2.87.3
     git clone --recurse-submodules --depth 1 https://github.com/cli/cli.git -b v${GH_VERSION}
@@ -684,7 +684,7 @@ EOF
 # Build kubernetes 1.35.2
 FROM go-1.26 AS kubernetes
 
-ARG KUBECTL_VERSION=1.35.2
+ARG KUBECTL_VERSION=1.35.3
 RUN bash -eux -o pipefail <<'EOF'
     # Download kubernetes v1.35.2
     git clone --recurse-submodules --depth 1 https://github.com/kubernetes/kubernetes.git -b v${KUBECTL_VERSION}
