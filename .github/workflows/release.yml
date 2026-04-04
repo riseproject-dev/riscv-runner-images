@@ -50,6 +50,9 @@ jobs:
         #   runs-on: ubuntu-latest # ubuntu-26.04-riscv-rva23 # Ubuntu 26.04 requires RVA23 hardware to run
     runs-on: ${{ matrix.runs-on }}
     needs: [resolve]
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -88,18 +91,24 @@ jobs:
           build-args: |
             OS_VERSION=${{ matrix.os-version }}
           cache-from: |
-            type=gha,scope=runner-${{ matrix.os }}-${{ matrix.os-version }}-main
-            ${{ github.event_name == 'pull_request' && format('type=gha,scope=type=gha,scope=runner-{0}-{1}-pr-{2}', matrix.os, matrix.os-version, github.event.pull_request.number) || '' }}
+            type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=runner-${{ matrix.os }}-${{ matrix.os-version }}-${{ env.GITHUB_REF_NAME_SLUG }}
+            ${{ github.event_name == 'pull_request' && format('type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=runner-{0}-{1}-pr-{2}', matrix.os, matrix.os-version, github.event.pull_request.number) || '' }}
           cache-to: |
-            type=gha,scope=runner-${{ matrix.os }}-${{ matrix.os-version }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main' }},mode=max
+            type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=runner-${{ matrix.os }}-${{ matrix.os-version }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || env.GITHUB_REF_NAME_SLUG }},mode=max
           push: ${{ github.repository_owner == 'riseproject-dev' }}
 
   build-dind:
     runs-on: ubuntu-24.04-riscv
     needs: [resolve]
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: rlespinasse/github-slug-action@9e7def61550737ba68c62d34a32dd31792e3f429 # v5.5.0
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup slog values of GitHub env variables
+        uses: rlespinasse/github-slug-action@9e7def61550737ba68c62d34a32dd31792e3f429 # v5.5.0
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
@@ -125,10 +134,10 @@ jobs:
             ${{ needs.resolve.outputs.environment == 'main' && format('{0}/{1}:dind-latest', env.REGISTRY, env.IMAGE) || '' }}
             ${{ needs.resolve.outputs.environment != 'main' && format('{0}/{1}:dind-{2}', env.REGISTRY, env.IMAGE, needs.resolve.outputs.environment || env.GITHUB_REF_NAME_SLUG) || '' }}
           cache-from: |
-            type=gha,scope=dind-main
-            ${{ github.event_name == 'pull_request' && format('type=gha,scope=type=gha,scope=dind-pr-{0}', github.event.pull_request.number) || '' }}
+            type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=dind-${{ env.GITHUB_REF_NAME_SLUG }}
+            ${{ github.event_name == 'pull_request' && format('type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=dind-pr-{0}', github.event.pull_request.number) || '' }}
           cache-to: |
-            type=gha,scope=dind-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'main' }},mode=max
+            type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=dind-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || env.GITHUB_REF_NAME_SLUG }},mode=max
           push: ${{ github.repository_owner == 'riseproject-dev' }}
 
   deploy:
