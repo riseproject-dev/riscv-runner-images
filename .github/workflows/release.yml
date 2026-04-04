@@ -20,8 +20,7 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s
-  IMAGE: riscv-runner
+  REGISTRY: rg.fr-par.scw.cloud/rise-riscv-runner
   RELEASE_ENVIRONMENT: ${{ (github.ref == 'refs/heads/main' && 'prod') || (github.ref == 'refs/heads/staging' && 'staging') || '' }}
 
 jobs:
@@ -86,64 +85,21 @@ jobs:
           file: runner/Dockerfile.${{ matrix.os }}
           platforms: linux/riscv64
           tags: |
-            ${{ needs.resolve.outputs.environment == 'main' && format('{0}/{1}:{2}-{3}-latest', env.REGISTRY, env.IMAGE, matrix.os, matrix.os-version) || '' }}
-            ${{ needs.resolve.outputs.environment != 'main' && format('{0}/{1}:{2}-{3}-{4}', env.REGISTRY, env.IMAGE, matrix.os, matrix.os-version, needs.resolve.outputs.environment || env.GITHUB_REF_NAME_SLUG) || '' }}
+            ${{ needs.resolve.outputs.environment != '' && format('{0}:{1}-{2}-latest', env.REGISTRY, matrix.os, matrix.os-version) || '' }}
+            ${{ needs.resolve.outputs.environment == '' && format('{0}:{1}-{2}-{3}', env.REGISTRY, matrix.os, matrix.os-version, github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || env.GITHUB_REF_POINT_SLUG) || '' }}
           build-args: |
             OS_VERSION=${{ matrix.os-version }}
           cache-from: |
-            type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=runner-${{ matrix.os }}-${{ matrix.os-version }}-${{ env.GITHUB_REF_NAME_SLUG }}
-            ${{ github.event_name == 'pull_request' && format('type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=runner-{0}-{1}-pr-{2}', matrix.os, matrix.os-version, github.event.pull_request.number) || '' }}
+            type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=runner-${{ matrix.os }}-${{ matrix.os-version }}-main
+            type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=runner-${{ matrix.os }}-${{ matrix.os-version }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || env.GITHUB_REF_POINT_SLUG }},mode=max
           cache-to: |
-            type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=runner-${{ matrix.os }}-${{ matrix.os-version }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || env.GITHUB_REF_NAME_SLUG }},mode=max
-          push: ${{ github.repository_owner == 'riseproject-dev' }}
-
-  build-dind:
-    runs-on: ubuntu-24.04-riscv
-    needs: [resolve]
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Setup slog values of GitHub env variables
-        uses: rlespinasse/github-slug-action@9e7def61550737ba68c62d34a32dd31792e3f429 # v5.5.0
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
-        with:
-          buildkitd-config-inline: |
-            [worker.oci]
-              max-parallelism = 2
-
-      - name: Login to Scaleway Container Registry
-        if: github.repository_owner == 'riseproject-dev'
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
-        with:
-          registry: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s
-          username: nologin
-          password: ${{ secrets.SCW_SECRET_KEY }}
-
-      - name: Build dind image
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
-        with:
-          platforms: linux/riscv64
-          context: dind
-          tags: |
-            ${{ needs.resolve.outputs.environment == 'main' && format('{0}/{1}:dind-latest', env.REGISTRY, env.IMAGE) || '' }}
-            ${{ needs.resolve.outputs.environment != 'main' && format('{0}/{1}:dind-{2}', env.REGISTRY, env.IMAGE, needs.resolve.outputs.environment || env.GITHUB_REF_NAME_SLUG) || '' }}
-          cache-from: |
-            type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=dind-${{ env.GITHUB_REF_NAME_SLUG }}
-            ${{ github.event_name == 'pull_request' && format('type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=dind-pr-{0}', github.event.pull_request.number) || '' }}
-          cache-to: |
-            type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=dind-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || env.GITHUB_REF_NAME_SLUG }},mode=max
+            type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=runner-${{ matrix.os }}-${{ matrix.os-version }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || env.GITHUB_REF_POINT_SLUG }},mode=max
           push: ${{ github.repository_owner == 'riseproject-dev' }}
 
   deploy:
     if: github.repository_owner == 'riseproject-dev' && needs.resolve.outputs.environment != ''
     runs-on: ubuntu-latest
-    needs: [resolve, build-runner, build-dind]
+    needs: [resolve, build-runner]
     environment: ${{ needs.resolve.outputs.environment }}
     steps:
       - name: Set up kubeconfig
