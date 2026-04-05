@@ -1,0 +1,19 @@
+[Unit]
+Description=GitHub Actions Runner
+After=docker.service import-container-env.service
+Requires=docker.service
+Wants=import-container-env.service
+
+[Service]
+Type=simple
+User=runner
+Group=runner
+WorkingDirectory=/home/runner
+EnvironmentFile=-/etc/github-runner/env
+ExecStart=/bin/bash -c 'exec /home/runner/run.sh --jitconfig "$RUNNER_JITCONFIG"'
+ExecStopPost=/bin/systemctl poweroff
+Restart=no
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,27 @@
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+After=network-online.target containerd.service import-container-env.service
+Wants=network-online.target
+Requires=containerd.service
+
+[Service]
+Type=notify
+ExecStartPre=/opt/dockerd/bin/docker-setup.sh
+ExecStart=/opt/dockerd/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock --mtu=1450
+ExecReload=/bin/kill -s HUP $MAINPID
+TimeoutStartSec=0
+RestartSec=2
+Restart=always
+StartLimitBurst=3
+StartLimitIntervalSec=60s
+LimitNPROC=infinity
+LimitCORE=infinity
+LimitNOFILE=infinity
+TasksMax=infinity
+Delegate=yes
+KillMode=process
+OOMScoreAdjust=-500
+
+[Install]
+WantedBy=multi-user.target

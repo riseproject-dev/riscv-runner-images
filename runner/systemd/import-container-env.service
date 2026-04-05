@@ -1,0 +1,13 @@
+[Unit]
+Description=Import Container Environment Variables
+DefaultDependencies=no
+Before=docker.service github-runner.service
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/import-container-env.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
