@@ -747,6 +747,7 @@ RUN bash -eux -o pipefail <<'EOF'
         ftp \
         g++ \
         g++-14 \
+        gettext-base \
         gcc \
         gcc-14 \
         git \
