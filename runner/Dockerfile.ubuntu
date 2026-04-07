@@ -519,7 +519,7 @@ EOF
 # Download Node.js 20
 FROM base-builder AS node-20
 
-ARG NODE20_VERSION=20.20.1
+ARG NODE20_VERSION=20.20.2
 ARG NODE20_SHA256=7cd17b9d99b97e3a8810b430a0f05ea718de2fc3e261fe183d1a1ae91c5e05db # https://unofficial-builds.nodejs.org/download/release/v20.20.1/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
     # Download Node.js 20 binary tarball (unofficial riscv64 build)
@@ -543,7 +543,7 @@ EOF
 # Download Node.js 22
 FROM base-builder AS node-22
 
-ARG NODE22_VERSION=22.22.1
+ARG NODE22_VERSION=22.22.2
 ARG NODE22_SHA256=a275f69f88f9790d3b8245753cfbed6803fd60b38646a5bedb5febaa97de0b04 # https://unofficial-builds.nodejs.org/download/release/v22.22.1/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
     # Download Node.js 22 binary tarball (unofficial riscv64 build)
@@ -567,7 +567,7 @@ EOF
 # Download Node.js 24
 FROM base-builder AS node-24
 
-ARG NODE24_VERSION=24.14.0
+ARG NODE24_VERSION=24.14.1
 ARG NODE24_SHA256=4f6ec0ed931532dfb17c5487ab822a60b732262d2681c77ae436420faef8ed0a # https://unofficial-builds.nodejs.org/download/release/v24.14.0/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
     # Download Node.js 24 binary tarball (unofficial riscv64 build)
@@ -592,7 +592,7 @@ EOF
 FROM base-builder AS rust
 
 ARG RUSTUP_VERSION=1.29.0
-ARG RUSTTOOLCHAIN_VERSION=1.94.0
+ARG RUSTTOOLCHAIN_VERSION=1.94.1
 ENV RUSTUP_HOME=/opt/rust/rustup
 ENV CARGO_HOME=/opt/rust/cargo
 RUN bash -eux -o pipefail <<'EOF'
@@ -650,7 +650,7 @@ EOF
 # Build GitHub CLI v2.87.3
 FROM go-1.26 AS gh
 
-ARG GH_VERSION=2.88.1
+ARG GH_VERSION=2.89.0
 RUN bash -eux -o pipefail <<'EOF'
     # Download GitHub CLI v2.87.3
     git clone --recurse-submodules --depth 1 https://github.com/cli/cli.git -b v${GH_VERSION}
