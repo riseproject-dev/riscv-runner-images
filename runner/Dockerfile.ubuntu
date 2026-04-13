@@ -608,7 +608,7 @@ FROM rust AS sccache
 ARG SCCACHE_VERSION=0.14.0
 RUN bash -eux -o pipefail <<'EOF'
     export PATH="${CARGO_HOME}/bin:${PATH}"
-    cargo install --no-default-features --features=gha sccache@${SCCACHE_VERSION}
+    cargo install --no-default-features --features=gha,s3 sccache@${SCCACHE_VERSION}
 EOF
 
 # Dockerload docker-compose v2 2.38.2
