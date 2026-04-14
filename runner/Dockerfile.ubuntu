@@ -730,7 +730,9 @@ RUN bash -eux -o pipefail <<'EOF'
         bzip2 \
         ca-certificates \
         ccache \
-        clang \
+        clang-{16,17,18} \
+        clang-tidy-{16,17,18} \
+        clang-format-{16,17,18} \
         cmake \
         coreutils \
         curl \
