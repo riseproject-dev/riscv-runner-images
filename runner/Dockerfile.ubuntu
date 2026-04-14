@@ -759,7 +759,7 @@ RUN bash -eux -o pipefail <<'EOF'
         iputils-ping \
         jq \
         libatomic1 \
-        libclang-dev \
+        libclang-{16,17,18}-dev \
         libbz2-1.0 \
         libexpat1 \
         libffi8 \
