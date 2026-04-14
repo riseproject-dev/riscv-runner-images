@@ -730,6 +730,7 @@ RUN bash -eux -o pipefail <<'EOF'
         bzip2 \
         ca-certificates \
         ccache \
+        clang \
         cmake \
         coreutils \
         curl \
@@ -758,6 +759,7 @@ RUN bash -eux -o pipefail <<'EOF'
         iputils-ping \
         jq \
         libatomic1 \
+        libclang-dev \
         libbz2-1.0 \
         libexpat1 \
         libffi8 \
