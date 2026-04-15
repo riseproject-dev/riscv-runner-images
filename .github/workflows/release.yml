@@ -96,6 +96,7 @@ jobs:
             ${{ github.event_name == 'pull_request' && format('type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=runner-{0}-{1}-pr-{2}', matrix.os, matrix.os-version, github.event.pull_request.number) || '' }}
           cache-to: |
             type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=runner-${{ matrix.os }}-${{ matrix.os-version }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || env.GITHUB_REF_NAME_SLUG }},mode=max
+          pull: ${{ needs.setup.outputs.environment != '' }}
           push: ${{ needs.resolve.outputs.external-contribution == 'false' }}
 
   build-dind:
@@ -139,6 +140,7 @@ jobs:
             ${{ github.event_name == 'pull_request' && format('type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=dind-pr-{0}', github.event.pull_request.number) || '' }}
           cache-to: |
             type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=dind-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || env.GITHUB_REF_NAME_SLUG }},mode=max
+          pull: ${{ needs.setup.outputs.environment != '' }}
           push: ${{ needs.resolve.outputs.external-contribution == 'false' }}
 
   deploy:
