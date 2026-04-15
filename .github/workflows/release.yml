@@ -108,6 +108,7 @@ jobs:
             ${{ env.GITHUB_REF_NAME_SLUG && format('{0}runner-{1}-{2}-{3}', needs.setup.outputs.docker-cache, matrix.os, matrix.os-version, env.GITHUB_REF_NAME_SLUG) || '' }}
           cache-to: |
             ${{ env.GITHUB_REF_NAME_SLUG && format('{0}runner-{1}-{2}-{3},mode=max', needs.setup.outputs.docker-cache, matrix.os, matrix.os-version, env.GITHUB_REF_NAME_SLUG) || '' }}
+          pull: ${{ needs.setup.outputs.environment != '' }}
           push: ${{ needs.setup.outputs.external-contribution == 'false' }}
 
   build-dind:
@@ -151,6 +152,7 @@ jobs:
             ${{ env.GITHUB_REF_NAME_SLUG && format('{0}dind-{1}', needs.setup.outputs.docker-cache, env.GITHUB_REF_NAME_SLUG) || '' }}
           cache-to: |
             ${{ env.GITHUB_REF_NAME_SLUG && format('{0}dind-{1},mode=max', needs.setup.outputs.docker-cache, env.GITHUB_REF_NAME_SLUG) || '' }}
+          pull: ${{ needs.setup.outputs.environment != '' }}
           push: ${{ needs.setup.outputs.external-contribution == 'false' }}
 
   deploy:
