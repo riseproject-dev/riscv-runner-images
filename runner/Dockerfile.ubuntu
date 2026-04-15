@@ -748,10 +748,12 @@ RUN bash -eux -o pipefail <<'EOF'
         flex \
         fonts-noto-color-emoji \
         ftp \
-        g++ \
+        g++-12 \
+        g++-13 \
         g++-14 \
         gettext-base \
-        gcc \
+        gcc-12 \
+        gcc-13 \
         gcc-14 \
         git \
         git-lfs \
