@@ -17,39 +17,80 @@ on:
       - staging
   workflow_dispatch:
 
-env:
-  REGISTRY: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s
-  IMAGE: riscv-runner
-  RELEASE_ENVIRONMENT: ${{ (github.ref == 'refs/heads/main' && 'prod') || (github.ref == 'refs/heads/staging' && 'staging') || '' }}
-
 jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      environment: ${{ steps.deployment.outputs.environment }}
-      external-contribution: ${{ steps.deployment.outputs.external-contribution }}
-      docker-cache: ${{ steps.caching.outputs.docker-cache }}
+      environment: ${{ steps.variables.outputs.environment }}
+      deploy-target: ${{ steps.variables.outputs.deploy-target }}
+      external-contribution: ${{ steps.variables.outputs.external-contribution }}
+      docker-registry: ${{ steps.variables.outputs.docker-registry }}
+      docker-output: ${{ steps.variables.outputs.docker-output }}
+      docker-output-file: ${{ steps.variables.outputs.docker-output-file }}
+      docker-tag-suffix: ${{ steps.variables.outputs.docker-tag-suffix }}
+      docker-cache: ${{ steps.variables.outputs.docker-cache }}
     steps:
       - name: Setup slog values of GitHub env variables
         uses: rlespinasse/github-slug-action@e6f261660910b273384c5c42b17a0217881b217a # v5.6.0
 
-      - name: Setup deployment environment variables
-        id: deployment
+      - name: Setup variables
+        id: variables
         run: |
-          if [[ ${{ env.GITHUB_REF_NAME_SLUG == 'main' || env.GITHUB_REF_NAME_SLUG == 'staging' }} ]]; then
-            echo "environment=${{ env.GITHUB_REF_NAME_SLUG }}" >> $GITHUB_OUTPUT
-          fi
-          # Whether a PR comes from an non-"riseproject-dev" repository
-          echo "external-contribution=${{ github.repository_owner != 'riseproject-dev' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) && 'true' || 'false'  }}" >> $GITHUB_OUTPUT
+          set -eux -o pipefail
 
-      - name: Setup caching variables
-        id: caching
-        run: |
-          if [[ "${{ steps.deployment.outputs.external-contribution }}" == "false" ]]; then
-            echo "docker-cache=type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name=" >> $GITHUB_OUTPUT
+          # Which environment to use
+          if ${{ github.event_name != 'pull_request' && (env.GITHUB_REF_NAME_SLUG == 'main' || env.GITHUB_REF_NAME_SLUG == 'staging') }}; then
+            environment="${{ env.GITHUB_REF_NAME_SLUG }}"
           else
-            echo "docker-cache=type=gha,scope=" >> $GITHUB_OUTPUT
+            environment=
           fi
+          echo "environment=${environment}" >> $GITHUB_OUTPUT
+
+          # Whether the deployment should be done to Scaleway or GitHub Container Registry
+          if ${{ github.repository_owner == 'riseproject-dev' }} && [[ "${environment}" != '' ]]; then
+            deploy_target="scw"
+          else
+            deploy_target="ghcr"
+          fi
+          echo "deploy-target=${deploy_target}" >> $GITHUB_OUTPUT
+
+          # Which Docker registry to use
+          if [[ "${deploy_target}" == "scw" ]]; then
+            docker_registry="rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s"
+          elif ${{ github.event_name != 'pull_request' }}; then
+            docker_registry="ghcr.io/${{ github.repository }}"
+          else
+            docker_registry="" # we do not push on PR
+          fi
+          echo "docker-registry=${docker_registry}" >> $GITHUB_OUTPUT
+
+          # What's the Docker build output
+          if [[ -z "${docker_registry}" ]]; then
+            docker_output_file="/tmp/image.tar"
+            docker_output="type=tar,dest=${docker_output_file}"
+          else
+            # we do not generate artifact if we push to registry
+            docker_output_file=""
+            docker_output=""
+          fi
+          echo "docker-output=${docker_output}" >> $GITHUB_OUTPUT
+          echo "docker-output-file=${docker_output_file}" >> $GITHUB_OUTPUT
+
+          # Which Docker tag suffix to use
+          if ${{ github.event_name != 'pull_request' && env.GITHUB_REF_NAME_SLUG == 'main' }}; then
+            docker_tag_suffix="latest"
+          else
+            docker_tag_suffix="${{ env.GITHUB_REF_NAME_SLUG }}"
+          fi
+          echo "docker-tag-suffix=${docker_tag_suffix}" >> $GITHUB_OUTPUT
+
+          # Which Docker cache to use
+          if ${{ github.repository_owner == 'riseproject-dev' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}; then
+            docker_cache="type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name="
+          else
+            docker_cache="type=gha,scope="
+          fi
+          echo "docker-cache=${docker_cache}" >> $GITHUB_OUTPUT
 
   build-runner:
     strategy:
@@ -63,6 +104,8 @@ jobs:
         #   runs-on: ubuntu-latest # ubuntu-26.04-riscv-rva23 # Ubuntu 26.04 requires RVA23 hardware to run
     runs-on: ${{ matrix.runs-on }}
     needs: [setup]
+    permissions:
+      packages: write
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
@@ -85,12 +128,12 @@ jobs:
               max-parallelism = 2
 
       - name: Login to Container Registry
-        if: needs.setup.outputs.external-contribution == 'false'
+        if: ${{ needs.setup.outputs.docker-registry != '' }}
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
-          registry: ${{ env.REGISTRY }}
-          username: nologin
-          password: ${{ secrets.SCW_SECRET_KEY }}
+          registry: ${{ needs.setup.outputs.docker-registry }}
+          username: ${{ needs.setup.outputs.deploy-target == 'scw' && 'nologin' || github.actor }}
+          password: ${{ needs.setup.outputs.deploy-target == 'scw' && secrets.SCW_SECRET_KEY || secrets.GITHUB_TOKEN }}
 
       - name: Build ${{ matrix.os }}-${{ matrix.os-version }} runner image
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
@@ -101,20 +144,30 @@ jobs:
           build-args: |
             OS_VERSION=${{ matrix.os-version }}
           tags: |
-            ${{ needs.setup.outputs.environment == 'main' && format('{0}/{1}:{2}-{3}-latest', env.REGISTRY, env.IMAGE, matrix.os, matrix.os-version) || '' }}
-            ${{ needs.setup.outputs.environment != 'main' && format('{0}/{1}:{2}-{3}-{4}', env.REGISTRY, env.IMAGE, matrix.os, matrix.os-version, env.GITHUB_REF_NAME_SLUG) || '' }}
+            ${{ needs.setup.outputs.docker-registry != '' && format('{0}/riscv-runner:{1}-{2}-{3}', needs.setup.outputs.docker-registry, matrix.os, matrix.os-version, needs.setup.outputs.docker-tag-suffix) || '' }}
           cache-from: |
-            ${{ env.GITHUB_BASE_REF_SLUG && format('{0}runner-{1}-{2}-{3}', needs.setup.outputs.docker-cache, matrix.os, matrix.os-version, env.GITHUB_BASE_REF_SLUG) || '' }}
-            ${{ env.GITHUB_REF_NAME_SLUG && format('{0}runner-{1}-{2}-{3}', needs.setup.outputs.docker-cache, matrix.os, matrix.os-version, env.GITHUB_REF_NAME_SLUG) || '' }}
+            ${{ needs.setup.outputs.environment != '' && format('{0}runner-{1}-{2}-{3}', needs.setup.outputs.docker-cache, matrix.os, matrix.os-version, needs.setup.outputs.environment) || '' }}
+            ${{ needs.setup.outputs.environment == '' && format('{0}runner-{1}-{2}-staging', needs.setup.outputs.docker-cache, matrix.os, matrix.os-version) || '' }}
           cache-to: |
-            ${{ env.GITHUB_REF_NAME_SLUG && format('{0}runner-{1}-{2}-{3},mode=max', needs.setup.outputs.docker-cache, matrix.os, matrix.os-version, env.GITHUB_REF_NAME_SLUG) || '' }}
-            ${{ needs.setup.outputs.environment == 'staging' && format('type=gha,scope=runner-{0}-{1}-staging,mode=max', matrix.os, matrix.os-version) || '' }}
+            ${{ needs.setup.outputs.environment != '' && format('{0}runner-{1}-{2}-{3},mode=max', needs.setup.outputs.docker-cache, matrix.os, matrix.os-version, needs.setup.outputs.environment) || '' }}
+            ${{ needs.setup.outputs.environment == 'staging' && !startsWith(needs.setup.outputs.docker-cache, 'type=gha,') && format('type=gha,scope=runner-{0}-{1}-staging,mode=max', matrix.os, matrix.os-version) || '' }}
+          push: ${{ needs.setup.outputs.docker-registry != '' }}
           pull: ${{ needs.setup.outputs.environment != '' }}
-          push: ${{ needs.setup.outputs.external-contribution == 'false' }}
+          outputs: ${{ needs.setup.outputs.docker-output }}
+
+      - name: Upload ${{ matrix.os }}-${{ matrix.os-version }} runner image
+        if: ${{ needs.setup.outputs.docker-output != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.os }}-${{ matrix.os-version }}-runner-image
+          path: |
+            ${{ needs.setup.outputs.docker-output-file }}
 
   build-dind:
     runs-on: ubuntu-24.04-riscv
     needs: [setup]
+    permissions:
+      packages: write
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
@@ -132,13 +185,13 @@ jobs:
             [worker.oci]
               max-parallelism = 2
 
-      - name: Login to Scaleway Container Registry
-        if: needs.setup.outputs.external-contribution == 'false'
+      - name: Login to Container Registry
+        if: ${{ needs.setup.outputs.docker-registry != '' }}
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
-          registry: rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s
-          username: nologin
-          password: ${{ secrets.SCW_SECRET_KEY }}
+          registry: ${{ needs.setup.outputs.docker-registry }}
+          username: ${{ needs.setup.outputs.deploy-target == 'scw' && 'nologin' || github.actor }}
+          password: ${{ needs.setup.outputs.deploy-target == 'scw' && secrets.SCW_SECRET_KEY || secrets.GITHUB_TOKEN }}
 
       - name: Build dind image
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
@@ -146,19 +199,27 @@ jobs:
           platforms: linux/riscv64
           context: dind
           tags: |
-            ${{ needs.setup.outputs.environment == 'main' && format('{0}/{1}:dind-latest', env.REGISTRY, env.IMAGE) || '' }}
-            ${{ needs.setup.outputs.environment != 'main' && format('{0}/{1}:dind-{2}', env.REGISTRY, env.IMAGE, env.GITHUB_REF_NAME_SLUG) || '' }}
+            ${{ needs.setup.outputs.docker-registry != '' && format('{0}/riscv-runner:dind-{1}', needs.setup.outputs.docker-registry, needs.setup.outputs.docker-tag-suffix) || '' }}
           cache-from: |
-            ${{ env.GITHUB_BASE_REF_SLUG && format('{0}dind-{1}', needs.setup.outputs.docker-cache, env.GITHUB_BASE_REF_SLUG) || '' }}
-            ${{ env.GITHUB_REF_NAME_SLUG && format('{0}dind-{1}', needs.setup.outputs.docker-cache, env.GITHUB_REF_NAME_SLUG) || '' }}
+            ${{ needs.setup.outputs.environment != '' && format('{0}dind-{1}', needs.setup.outputs.docker-cache, needs.setup.outputs.environment) || '' }}
+            ${{ needs.setup.outputs.environment == '' && format('{0}dind-staging', needs.setup.outputs.docker-cache) || '' }}
           cache-to: |
-            ${{ env.GITHUB_REF_NAME_SLUG && format('{0}dind-{1},mode=max', needs.setup.outputs.docker-cache, env.GITHUB_REF_NAME_SLUG) || '' }}
-            ${{ needs.setup.outputs.environment == 'staging' && 'type=gha,scope=dind-staging,mode=max' || '' }}
+            ${{ needs.setup.outputs.environment != '' && format('{0}dind-{1},mode=max', needs.setup.outputs.docker-cache, needs.setup.outputs.environment) || '' }}
+            ${{ needs.setup.outputs.environment == 'staging' && !startsWith(needs.setup.outputs.docker-cache, 'type=gha,') && format('type=gha,scope=dind-staging,mode=max') || '' }}
+          push: ${{ needs.setup.outputs.docker-registry != '' }}
           pull: ${{ needs.setup.outputs.environment != '' }}
-          push: ${{ needs.setup.outputs.external-contribution == 'false' }}
+          outputs: ${{ needs.setup.outputs.docker-output }}
+
+      - name: Upload dind image
+        if: ${{ needs.setup.outputs.docker-output != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dind-image
+          path: |
+            ${{ needs.setup.outputs.docker-output-file }}
 
   deploy:
-    if: ${{ needs.setup.outputs.external-contribution == 'false' && needs.setup.outputs.environment != '' }}
+    if: ${{ needs.setup.outputs.deploy-target == 'scw' && needs.setup.outputs.environment != '' }}
     runs-on: ubuntu-latest
     needs: [setup, build-runner, build-dind]
     environment: ${{ needs.setup.outputs.environment }}
@@ -169,6 +230,7 @@ jobs:
           echo "${{ secrets.K8S_KUBECONFIG }}" > ~/.kube/config
           chmod 600 ~/.kube/config
 
-      - run: |
+      - name: Rollout Restart
+        run: |
           kubectl rollout restart daemonset/rise-riscv-runner-device-plugin -n kube-system
           kubectl rollout status daemonset/rise-riscv-runner-device-plugin -n kube-system --watch
