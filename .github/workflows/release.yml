@@ -233,4 +233,6 @@ jobs:
       - name: Rollout Restart
         run: |
           kubectl rollout restart daemonset/rise-riscv-runner-device-plugin -n kube-system
-          kubectl rollout status daemonset/rise-riscv-runner-device-plugin -n kube-system --watch
+          while ! kubectl rollout status daemonset/rise-riscv-runner-device-plugin -n kube-system --timeout=5m 2>/dev/null; do
+            kubectl get pods -o wide -n kube-system -l app.kubernetes.io/name=riscv-runner-device-plugin -l app.kubernetes.io/component=device-plugin --sort-by=.spec.nodeName 2>/dev/null
+          done
