@@ -714,6 +714,13 @@ ARG OS_VERSION=latest
 FROM docker.io/ubuntu:${OS_VERSION}
 
 RUN bash -eux -o pipefail <<'EOF'
+    apt-get update -qq
+    apt-get install -qq -y --no-install-recommends \
+        sudo \
+     && true
+
+    rm -rf /var/lib/apt/lists/*
+
     # Add a user which will run the github actions
     useradd -m runner # also creates a `runner` group
     # Add runner to sudoers without password prompt
