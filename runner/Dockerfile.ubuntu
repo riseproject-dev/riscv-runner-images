@@ -712,6 +712,118 @@ EOF
 ARG OS_VERSION=latest
 FROM docker.io/ubuntu:${OS_VERSION}
 
+# Install Python 3.10-3.14
+
+COPY --from=python-3.10 /opt/python-3.10 /opt/python-3.10
+COPY --from=python-3.11 /opt/python-3.11 /opt/python-3.11
+COPY --from=python-3.12 /opt/python-3.12 /opt/python-3.12
+COPY --from=python-3.13 /opt/python-3.13 /opt/python-3.13
+COPY --from=python-3.13t /opt/python-3.13t /opt/python-3.13t
+COPY --from=python-3.14 /opt/python-3.14 /opt/python-3.14
+COPY --from=python-3.14t /opt/python-3.14t /opt/python-3.14t
+
+# FIXME: figure out whether/how to have the free-threaded versions on the PATH
+ENV PATH=/opt/python-3.10/bin:/opt/python-3.11/bin:/opt/python-3.12/bin:/opt/python-3.13/bin:/opt/python-3.14/bin:${PATH}
+# Set python-3.12 as the default version
+ENV pythonLocation=/opt/python-3.12
+ENV Python_ROOT_DIR=${pythonLocation}
+ENV Python2_ROOT_DIR=${pythonLocation}
+ENV Python3_ROOT_DIR=${pythonLocation}
+ENV PATH=${pythonLocation}/bin:${PATH}
+
+# Install Go 1.22-1.25
+COPY --from=go-1.22 /opt/go-1.22 /opt/go-1.22
+COPY --from=go-1.23 /opt/go-1.23 /opt/go-1.23
+COPY --from=go-1.24 /opt/go-1.24 /opt/go-1.24
+COPY --from=go-1.25 /opt/go-1.25 /opt/go-1.25
+RUN bash -eux -o pipefail <<'EOF'
+    # Make Go 1.24 the default go binary
+    # Set up update-alternatives for go and gofmt
+    update-alternatives --install /usr/bin/go go /opt/go-1.22/bin/go 22 \
+        --slave /usr/bin/gofmt gofmt /opt/go-1.22/bin/gofmt
+    update-alternatives --install /usr/bin/go go /opt/go-1.23/bin/go 23 \
+        --slave /usr/bin/gofmt gofmt /opt/go-1.23/bin/gofmt
+    update-alternatives --install /usr/bin/go go /opt/go-1.24/bin/go 100 \
+        --slave /usr/bin/gofmt gofmt /opt/go-1.24/bin/gofmt
+    update-alternatives --install /usr/bin/go go /opt/go-1.25/bin/go 25 \
+        --slave /usr/bin/gofmt gofmt /opt/go-1.25/bin/gofmt
+EOF
+
+# Install Java 17, 21, 25
+COPY --from=java-17 /opt/jdk-17 /opt/jdk-17
+COPY --from=java-21 /opt/jdk-21 /opt/jdk-21
+COPY --from=java-25 /opt/jdk-25 /opt/jdk-25
+ENV JAVA_HOME_17_RISCV64=/opt/jdk-17
+ENV JAVA_HOME_21_RISCV64=/opt/jdk-21
+ENV JAVA_HOME_25_RISCV64=/opt/jdk-25
+ENV JAVA_HOME=/opt/jdk-25
+ENV PATH=${JAVA_HOME}/bin:${PATH}
+
+# Install Apache Ant
+COPY --from=ant /opt/ant /opt/ant
+ENV ANT_HOME=/opt/ant
+ENV PATH=${ANT_HOME}/bin:${PATH}
+
+# Install Gradle
+COPY --from=gradle /opt/gradle /opt/gradle
+ENV GRADLE_HOME=/opt/gradle
+ENV PATH=${GRADLE_HOME}/bin:${PATH}
+
+# Install Apache Maven
+COPY --from=maven /opt/maven /opt/maven
+ENV MAVEN_HOME=/opt/maven
+ENV PATH=${MAVEN_HOME}/bin:${PATH}
+
+# Install Node 20, 22, 24
+COPY --from=node-20 /opt/node-20 /opt/node-20
+COPY --from=node-22 /opt/node-22 /opt/node-22
+COPY --from=node-24 /opt/node-24 /opt/node-24
+RUN bash -eux -o pipefail <<'EOF'
+    # Make Node 20 the default version
+    update-alternatives --install /usr/bin/node node /opt/node-20/bin/node 100 \
+        --slave /usr/bin/npm npm /opt/node-20/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-20/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-20/bin/corepack
+    update-alternatives --install /usr/bin/node node /opt/node-22/bin/node 22 \
+        --slave /usr/bin/npm npm /opt/node-22/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-22/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-22/bin/corepack
+    update-alternatives --install /usr/bin/node node /opt/node-24/bin/node 24 \
+        --slave /usr/bin/npm npm /opt/node-24/bin/npm \
+        --slave /usr/bin/npx npx /opt/node-24/bin/npx \
+        --slave /usr/bin/corepack corepack /opt/node-24/bin/corepack
+EOF
+
+# Install Docker CLI Plugins
+COPY --from=docker-compose /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
+COPY --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx
+
+# Install GitHub CLI
+COPY --from=gh /opt/gh /opt/gh
+ENV PATH=/opt/gh/bin:${PATH}
+
+# Install Kubernetes
+COPY --from=kubernetes /opt/kubernetes /opt/kubernetes
+ENV PATH=/opt/kubernetes/bin:${PATH}
+
+# Install ninja
+COPY --from=ninja /opt/ninja /opt/ninja
+ENV PATH=/opt/ninja/bin:${PATH}
+
+# Install Rust; it needs a runner user-writable location
+COPY --from=rust --chown=runner:runner /opt/rust/rustup /home/runner/.rustup
+COPY --from=rust --chown=runner:runner /opt/rust/cargo /home/runner/.cargo
+ENV RUSTUP_HOME=/home/runner/.rustup
+ENV CARGO_HOME=/home/runner/.cargo
+ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
+
+# Install sccache
+COPY --from=sccache --chown=runner:runner /opt/rust/cargo/bin/sccache ${CARGO_HOME}/bin/sccache
+
+# Setup PATH for local installs
+ENV PATH=/home/runner/.local/bin:${PATH}
+
+# Install all packages from Ubuntu registries
 ENV DEBIAN_FRONTEND=noninteractive
 RUN bash -eux -o pipefail <<'EOF'
     # Get information about current OS
@@ -845,117 +957,6 @@ RUN bash -eux -o pipefail <<'EOF'
     # Add runner to sudoers without password prompt
     echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
 EOF
-
-# Install Python 3.10-3.14
-
-COPY --from=python-3.10 /opt/python-3.10 /opt/python-3.10
-COPY --from=python-3.11 /opt/python-3.11 /opt/python-3.11
-COPY --from=python-3.12 /opt/python-3.12 /opt/python-3.12
-COPY --from=python-3.13 /opt/python-3.13 /opt/python-3.13
-COPY --from=python-3.13t /opt/python-3.13t /opt/python-3.13t
-COPY --from=python-3.14 /opt/python-3.14 /opt/python-3.14
-COPY --from=python-3.14t /opt/python-3.14t /opt/python-3.14t
-
-# FIXME: figure out whether/how to have the free-threaded versions on the PATH
-ENV PATH=/opt/python-3.10/bin:/opt/python-3.11/bin:/opt/python-3.12/bin:/opt/python-3.13/bin:/opt/python-3.14/bin:${PATH}
-# Set python-3.12 as the default version
-ENV pythonLocation=/opt/python-3.12
-ENV Python_ROOT_DIR=${pythonLocation}
-ENV Python2_ROOT_DIR=${pythonLocation}
-ENV Python3_ROOT_DIR=${pythonLocation}
-ENV PATH=${pythonLocation}/bin:${PATH}
-
-# Install Go 1.22-1.25
-COPY --from=go-1.22 /opt/go-1.22 /opt/go-1.22
-COPY --from=go-1.23 /opt/go-1.23 /opt/go-1.23
-COPY --from=go-1.24 /opt/go-1.24 /opt/go-1.24
-COPY --from=go-1.25 /opt/go-1.25 /opt/go-1.25
-RUN bash -eux -o pipefail <<'EOF'
-    # Make Go 1.24 the default go binary
-    # Set up update-alternatives for go and gofmt
-    update-alternatives --install /usr/bin/go go /opt/go-1.22/bin/go 22 \
-        --slave /usr/bin/gofmt gofmt /opt/go-1.22/bin/gofmt
-    update-alternatives --install /usr/bin/go go /opt/go-1.23/bin/go 23 \
-        --slave /usr/bin/gofmt gofmt /opt/go-1.23/bin/gofmt
-    update-alternatives --install /usr/bin/go go /opt/go-1.24/bin/go 100 \
-        --slave /usr/bin/gofmt gofmt /opt/go-1.24/bin/gofmt
-    update-alternatives --install /usr/bin/go go /opt/go-1.25/bin/go 25 \
-        --slave /usr/bin/gofmt gofmt /opt/go-1.25/bin/gofmt
-EOF
-
-# Install Java 17, 21, 25
-COPY --from=java-17 /opt/jdk-17 /opt/jdk-17
-COPY --from=java-21 /opt/jdk-21 /opt/jdk-21
-COPY --from=java-25 /opt/jdk-25 /opt/jdk-25
-ENV JAVA_HOME_17_RISCV64=/opt/jdk-17
-ENV JAVA_HOME_21_RISCV64=/opt/jdk-21
-ENV JAVA_HOME_25_RISCV64=/opt/jdk-25
-ENV JAVA_HOME=/opt/jdk-25
-ENV PATH=${JAVA_HOME}/bin:${PATH}
-
-# Install Apache Ant
-COPY --from=ant /opt/ant /opt/ant
-ENV ANT_HOME=/opt/ant
-ENV PATH=${ANT_HOME}/bin:${PATH}
-
-# Install Gradle
-COPY --from=gradle /opt/gradle /opt/gradle
-ENV GRADLE_HOME=/opt/gradle
-ENV PATH=${GRADLE_HOME}/bin:${PATH}
-
-# Install Apache Maven
-COPY --from=maven /opt/maven /opt/maven
-ENV MAVEN_HOME=/opt/maven
-ENV PATH=${MAVEN_HOME}/bin:${PATH}
-
-# Install Node 20, 22, 24
-COPY --from=node-20 /opt/node-20 /opt/node-20
-COPY --from=node-22 /opt/node-22 /opt/node-22
-COPY --from=node-24 /opt/node-24 /opt/node-24
-RUN bash -eux -o pipefail <<'EOF'
-    # Make Node 20 the default version
-    update-alternatives --install /usr/bin/node node /opt/node-20/bin/node 100 \
-        --slave /usr/bin/npm npm /opt/node-20/bin/npm \
-        --slave /usr/bin/npx npx /opt/node-20/bin/npx \
-        --slave /usr/bin/corepack corepack /opt/node-20/bin/corepack
-    update-alternatives --install /usr/bin/node node /opt/node-22/bin/node 22 \
-        --slave /usr/bin/npm npm /opt/node-22/bin/npm \
-        --slave /usr/bin/npx npx /opt/node-22/bin/npx \
-        --slave /usr/bin/corepack corepack /opt/node-22/bin/corepack
-    update-alternatives --install /usr/bin/node node /opt/node-24/bin/node 24 \
-        --slave /usr/bin/npm npm /opt/node-24/bin/npm \
-        --slave /usr/bin/npx npx /opt/node-24/bin/npx \
-        --slave /usr/bin/corepack corepack /opt/node-24/bin/corepack
-EOF
-
-# Install Docker CLI Plugins
-COPY --from=docker-compose /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
-COPY --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx
-
-# Install GitHub CLI
-COPY --from=gh /opt/gh /opt/gh
-ENV PATH=/opt/gh/bin:${PATH}
-
-# Install Kubernetes
-COPY --from=kubernetes /opt/kubernetes /opt/kubernetes
-ENV PATH=/opt/kubernetes/bin:${PATH}
-
-# Install ninja
-COPY --from=ninja /opt/ninja /opt/ninja
-ENV PATH=/opt/ninja/bin:${PATH}
-
-# Install Rust; it needs a runner user-writable location
-COPY --from=rust --chown=runner:runner /opt/rust/rustup /home/runner/.rustup
-COPY --from=rust --chown=runner:runner /opt/rust/cargo /home/runner/.cargo
-ENV RUSTUP_HOME=/home/runner/.rustup
-ENV CARGO_HOME=/home/runner/.cargo
-ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
-
-# Install sccache
-COPY --from=sccache --chown=runner:runner /opt/rust/cargo/bin/sccache ${CARGO_HOME}/bin/sccache
-
-# Setup PATH for local installs
-ENV PATH=/home/runner/.local/bin:${PATH}
 
 # Setup runner user
 WORKDIR /home/runner
