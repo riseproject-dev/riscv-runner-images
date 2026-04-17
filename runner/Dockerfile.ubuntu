@@ -707,10 +707,18 @@ RUN bash -eux -o pipefail <<'EOF'
     /opt/ninja/bin/ninja --version
 EOF
 
+##########################################
 # Build final image
 
 ARG OS_VERSION=latest
 FROM docker.io/ubuntu:${OS_VERSION}
+
+RUN bash -eux -o pipefail <<'EOF'
+    # Add a user which will run the github actions
+    useradd -m runner # also creates a `runner` group
+    # Add runner to sudoers without password prompt
+    echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
+EOF
 
 # Install Python 3.10-3.14
 
@@ -951,11 +959,6 @@ RUN bash -eux -o pipefail <<'EOF'
 
     # Clean up apt cache to reduce image size
     rm -rf /var/lib/apt/lists/*
-
-    # Add a user which will run the github actions
-    useradd -m runner # also creates a `runner` group
-    # Add runner to sudoers without password prompt
-    echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
 EOF
 
 # Setup runner user
