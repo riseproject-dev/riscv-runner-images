@@ -661,6 +661,7 @@ RUN bash -eux -o pipefail <<'EOF'
     go version
 
     # Install to /opt/gh
+    export GO_LDFLAGS="-s -w" # reduce size of resulting binaries
     make install prefix=/opt/gh
 
     # Smoke test
