@@ -72,29 +72,6 @@
     "dockerfile": "runner/Dockerfile.ubuntu"
   },
   {
-    "arg": "JAVA17_VERSION",
-    "json_tool": "Java",
-    "match_prefix": "17",
-    "dockerfile": "runner/Dockerfile.ubuntu"
-  },
-  {
-    "arg": "JAVA21_VERSION",
-    "json_tool": "Java",
-    "match_prefix": "21",
-    "dockerfile": "runner/Dockerfile.ubuntu"
-  },
-  {
-    "arg": "JAVA25_VERSION",
-    "json_tool": "Java",
-    "match_prefix": "25",
-    "dockerfile": "runner/Dockerfile.ubuntu"
-  },
-  {
-    "arg": "ANT_VERSION",
-    "json_tool": "Project Management/Ant",
-    "dockerfile": "runner/Dockerfile.ubuntu"
-  },
-  {
     "arg": "GRADLE_VERSION",
     "json_tool": "Project Management/Gradle",
     "dockerfile": "runner/Dockerfile.ubuntu"
