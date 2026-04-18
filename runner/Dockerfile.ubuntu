@@ -4,6 +4,8 @@
 ARG OS_VERSION=latest
 FROM docker.io/ubuntu:${OS_VERSION} AS python-builder
 
+ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN bash -eux -o pipefail <<'EOF'
@@ -33,7 +35,7 @@ RUN bash -eux -o pipefail <<'EOF'
         zlib1g-dev \
      && true
 
-  rm -rf /var/lib/apt/lists/*
+  rm -rf /var/{lib,log}/apt/lists/*
 EOF
 
 # Build Python 3.10
@@ -53,12 +55,12 @@ RUN bash -eux -o pipefail <<'EOF'
     pushd Python-${PYTHON310_VERSION}
 
     # Configure & Build & Install
-    ./configure --prefix=/opt/python-3.10 --with-ensurepip=install --disable-test-modules --enable-shared
+    ./configure --prefix=${RUNNER_TOOL_CACHE}/Python/${PYTHON310_VERSION}/riscv64 --with-ensurepip=install --disable-test-modules --enable-shared
     make -j$(nproc)
     make install
 
     # Fix RPATH for python3.10 executable
-    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.10/bin/python3.10
+    patchelf --set-rpath '$ORIGIN/../lib' ${RUNNER_TOOL_CACHE}/Python/${PYTHON310_VERSION}/riscv64/bin/python3.10
 
     popd
 
@@ -66,7 +68,7 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf Python-${PYTHON310_VERSION} Python-${PYTHON310_VERSION}.tgz
 
     # Smoke test
-    /opt/python-3.10/bin/python3.10 --version
+    ${RUNNER_TOOL_CACHE}/Python/${PYTHON310_VERSION}/riscv64/bin/python3.10 --version
 EOF
 
 # Build Python 3.11
@@ -86,12 +88,12 @@ RUN bash -eux -o pipefail <<'EOF'
     pushd Python-${PYTHON311_VERSION}
 
     # Configure & Build & Install
-    ./configure --prefix=/opt/python-3.11 --with-ensurepip=install --disable-test-modules --enable-shared
+    ./configure --prefix=${RUNNER_TOOL_CACHE}/Python/${PYTHON311_VERSION}/riscv64 --with-ensurepip=install --disable-test-modules --enable-shared
     make -j$(nproc)
     make install
 
     # Fix RPATH for python3.11 executable
-    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.11/bin/python3.11
+    patchelf --set-rpath '$ORIGIN/../lib' ${RUNNER_TOOL_CACHE}/Python/${PYTHON311_VERSION}/riscv64/bin/python3.11
 
     popd
 
@@ -99,7 +101,7 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf Python-${PYTHON311_VERSION} Python-${PYTHON311_VERSION}.tgz
 
     # Smoke test
-    /opt/python-3.11/bin/python3.11 --version
+    ${RUNNER_TOOL_CACHE}/Python/${PYTHON311_VERSION}/riscv64/bin/python3.11 --version
 EOF
 
 # Build Python 3.12
@@ -119,12 +121,12 @@ RUN bash -eux -o pipefail <<'EOF'
     pushd Python-${PYTHON312_VERSION}
 
     # Configure & Build & Install
-    ./configure --prefix=/opt/python-3.12 --with-ensurepip=install --disable-test-modules --enable-shared
+    ./configure --prefix=${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION}/riscv64 --with-ensurepip=install --disable-test-modules --enable-shared
     make -j$(nproc)
     make install
 
     # Fix RPATH for python3.12 executable
-    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.12/bin/python3.12
+    patchelf --set-rpath '$ORIGIN/../lib' ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION}/riscv64/bin/python3.12
 
     popd
 
@@ -132,7 +134,7 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf Python-${PYTHON312_VERSION} Python-${PYTHON312_VERSION}.tgz
 
     # Smoke test
-    /opt/python-3.12/bin/python3.12 --version
+    ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION}/riscv64/bin/python3.12 --version
 EOF
 
 # Build Python 3.13
@@ -152,12 +154,12 @@ RUN bash -eux -o pipefail <<'EOF'
     pushd Python-${PYTHON313_VERSION}
 
     # Configure & Build & Install
-    ./configure --prefix=/opt/python-3.13 --with-ensurepip=install --disable-test-modules --enable-shared
+    ./configure --prefix=${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}/riscv64 --with-ensurepip=install --disable-test-modules --enable-shared
     make -j$(nproc)
     make install
 
     # Fix RPATH for python3.13 executable
-    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.13/bin/python3.13
+    patchelf --set-rpath '$ORIGIN/../lib' ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}/riscv64/bin/python3.13
 
     popd
 
@@ -165,7 +167,7 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf Python-${PYTHON313_VERSION} Python-${PYTHON313_VERSION}.tgz
 
     # Smoke test
-    /opt/python-3.13/bin/python3.13 --version
+    ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}/riscv64/bin/python3.13 --version
 EOF
 
 # Build Python 3.13 (free threaded)
@@ -185,12 +187,12 @@ RUN bash -eux -o pipefail <<'EOF'
     pushd Python-${PYTHON313_VERSION}
 
     # Configure & Build & Install
-    ./configure --prefix=/opt/python-3.13t --with-ensurepip=install --disable-test-modules --enable-shared --disable-gil
+    ./configure --prefix=${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}-freethreaded/riscv64 --with-ensurepip=install --disable-test-modules --enable-shared --disable-gil
     make -j$(nproc)
     make install
 
     # Fix RPATH for python3.13 executable
-    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.13t/bin/python3.13
+    patchelf --set-rpath '$ORIGIN/../lib' ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}-freethreaded/riscv64/bin/python3.13
 
     popd
 
@@ -198,7 +200,7 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf Python-${PYTHON313_VERSION} Python-${PYTHON313_VERSION}.tgz
 
     # Smoke test
-    /opt/python-3.13t/bin/python3.13 --version
+    ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}-freethreaded/riscv64/bin/python3.13 --version
 EOF
 
 # Build Python 3.14
@@ -218,12 +220,12 @@ RUN bash -eux -o pipefail <<'EOF'
     pushd Python-${PYTHON314_VERSION}
 
     # Configure & Build & Install
-    ./configure --prefix=/opt/python-3.14 --with-ensurepip=install --disable-test-modules --enable-shared
+    ./configure --prefix=${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}/riscv64 --with-ensurepip=install --disable-test-modules --enable-shared
     make -j$(nproc)
     make install
 
     # Fix RPATH for python3.14 executable
-    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.14/bin/python3.14
+    patchelf --set-rpath '$ORIGIN/../lib' ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}/riscv64/bin/python3.14
 
     popd
 
@@ -231,7 +233,7 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf Python-${PYTHON314_VERSION} Python-${PYTHON314_VERSION}.tgz
 
     # Smoke test
-    /opt/python-3.14/bin/python3.14 --version
+    ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}/riscv64/bin/python3.14 --version
 EOF
 
 # Build Python 3.14 (free threaded)
@@ -251,12 +253,12 @@ RUN bash -eux -o pipefail <<'EOF'
     pushd Python-${PYTHON314_VERSION}
 
     # Configure & Build & Install
-    ./configure --prefix=/opt/python-3.14t --with-ensurepip=install --disable-test-modules --enable-shared --disable-gil
+    ./configure --prefix=${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}-freethreaded/riscv64 --with-ensurepip=install --disable-test-modules --enable-shared --disable-gil
     make -j$(nproc)
     make install
 
     # Fix RPATH for python3.14 executable
-    patchelf --set-rpath '$ORIGIN/../lib' /opt/python-3.14t/bin/python3.14
+    patchelf --set-rpath '$ORIGIN/../lib' ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}-freethreaded/riscv64/bin/python3.14
 
     popd
 
@@ -264,13 +266,15 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf Python-${PYTHON314_VERSION} Python-${PYTHON314_VERSION}.tgz
 
     # Smoke test
-    /opt/python-3.14t/bin/python3.14 --version
+    ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}-freethreaded/riscv64/bin/python3.14 --version
 EOF
 
 # Base builder image with common download and build tools
 
 ARG OS_VERSION=latest
 FROM docker.io/ubuntu:${OS_VERSION} AS base-builder
+
+ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -307,10 +311,12 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "${GO122_SHA256}  go${GO122_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
 
     # Unpack and install
-    mkdir -p /opt/go-1.22
-    tar -xzf go${GO122_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.22 --strip-components=1
+    mkdir -p ${RUNNER_TOOL_CACHE}/go/${GO122_VERSION}/riscv64
+    tar -xzf go${GO122_VERSION}.linux-riscv64.tar.gz -C ${RUNNER_TOOL_CACHE}/go/${GO122_VERSION}/riscv64 --strip-components=1
     rm go${GO122_VERSION}.linux-riscv64.tar.gz
 EOF
+
+ENV PATH=${RUNNER_TOOL_CACHE}/go/${GO122_VERSION}/riscv64/bin:${PATH}
 
 # Download Go 1.23
 FROM base-builder AS go-1.23
@@ -325,10 +331,12 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "${GO123_SHA256}  go${GO123_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
 
     # Unpack and install
-    mkdir -p /opt/go-1.23
-    tar -xzf go${GO123_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.23 --strip-components=1
+    mkdir -p ${RUNNER_TOOL_CACHE}/go/${GO123_VERSION}/riscv64
+    tar -xzf go${GO123_VERSION}.linux-riscv64.tar.gz -C ${RUNNER_TOOL_CACHE}/go/${GO123_VERSION}/riscv64 --strip-components=1
     rm go${GO123_VERSION}.linux-riscv64.tar.gz
 EOF
+
+ENV PATH=${RUNNER_TOOL_CACHE}/go/${GO123_VERSION}/riscv64/bin:${PATH}
 
 # Download Go 1.24
 FROM base-builder AS go-1.24
@@ -343,10 +351,12 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "${GO124_SHA256}  go${GO124_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
 
     # Unpack and install
-    mkdir -p /opt/go-1.24
-    tar -xzf go${GO124_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.24 --strip-components=1
+    mkdir -p ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}/riscv64
+    tar -xzf go${GO124_VERSION}.linux-riscv64.tar.gz -C ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}/riscv64 --strip-components=1
     rm go${GO124_VERSION}.linux-riscv64.tar.gz
 EOF
+
+ENV PATH=${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}/riscv64/bin:${PATH}
 
 # Download Go 1.25
 FROM base-builder AS go-1.25
@@ -361,10 +371,12 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "${GO125_SHA256}  go${GO125_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
 
     # Unpack and install
-    mkdir -p /opt/go-1.25
-    tar -xzf go${GO125_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.25 --strip-components=1
+    mkdir -p ${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}/riscv64
+    tar -xzf go${GO125_VERSION}.linux-riscv64.tar.gz -C ${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}/riscv64 --strip-components=1
     rm go${GO125_VERSION}.linux-riscv64.tar.gz
 EOF
+
+ENV PATH=${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}/riscv64/bingo-1.26:${PATH}
 
 # Download Go 1.26
 FROM base-builder AS go-1.26
@@ -379,101 +391,83 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "${GO126_SHA256}  go${GO126_VERSION}.linux-riscv64.tar.gz" | sha256sum --check
 
     # Unpack and install
-    mkdir -p /opt/go-1.26
-    tar -xzf go${GO126_VERSION}.linux-riscv64.tar.gz -C /opt/go-1.26 --strip-components=1
+    mkdir -p ${RUNNER_TOOL_CACHE}/go/${GO126_VERSION}/riscv64
+    tar -xzf go${GO126_VERSION}.linux-riscv64.tar.gz -C ${RUNNER_TOOL_CACHE}/go/${GO126_VERSION}/riscv64 --strip-components=1
     rm go${GO126_VERSION}.linux-riscv64.tar.gz
 EOF
 
-# Download Java 17
-FROM base-builder AS java-17
+ENV PATH=${RUNNER_TOOL_CACHE}/go/${GO126_VERSION}/riscv64/bin:${PATH}
 
-ARG JAVA17_VERSION=17.0.18+8
-ARG JAVA17_SHA256=485f49ec3f7048b466c3b8e5b543932c8aae845a1ba95ebb30fc527019371ed4 # https://api.adoptium.net/v3/assets/latest/17/hotspot?os=linux&architecture=riscv64&image_type=jdk
+# Download Node.js 20
+FROM base-builder AS node-20
+
+ARG NODE20_VERSION=20.20.2
+ARG NODE20_SHA256=97a1b381eb457a904973cd3fa7999feb4fded5d286f4da08bbd0bf112601b0f4 # https://unofficial-builds.nodejs.org/download/release/v20.20.2/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
-    # Download Adoptium Temurin JDK 17 binary tarball
-    wget --progress=dot:giga "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.18%2B8/OpenJDK17U-jdk_riscv64_linux_hotspot_17.0.18_8.tar.gz" \
-        -O "openjdk-${JAVA17_VERSION}.tar.gz"
+    # Download Node.js 20 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE20_VERSION}/node-v${NODE20_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE20_VERSION}.tar.xz"
 
     # Verify package integrity
-    echo "${JAVA17_SHA256}  openjdk-${JAVA17_VERSION}.tar.gz" | sha256sum --check
+    echo "${NODE20_SHA256}  node-v${NODE20_VERSION}.tar.xz" | sha256sum --check
 
-    # Unpack to /opt/jdk-17
-    mkdir -p /opt/jdk-17
-    tar -xzf "openjdk-${JAVA17_VERSION}.tar.gz" -C /opt/jdk-17 --strip-components=1
+    # Unpack to ${RUNNER_TOOL_CACHE}/node/${NODE20_VERSION/}/riscv64
+    mkdir -p ${RUNNER_TOOL_CACHE}/node/${NODE20_VERSION/}/riscv64
+    tar -xJf "node-v${NODE20_VERSION}.tar.xz" -C ${RUNNER_TOOL_CACHE}/node/${NODE20_VERSION/}/riscv64 --strip-components 1
 
     # Remove now-unnecessary tarball
-    rm "openjdk-${JAVA17_VERSION}.tar.gz"
+    rm "node-v${NODE20_VERSION}.tar.xz"
 
     # Smoke test
-    /opt/jdk-17/bin/java -version
+    ${RUNNER_TOOL_CACHE}/node/${NODE20_VERSION/}/riscv64/bin/node --version
 EOF
 
-# Download Java 21
-FROM base-builder AS java-21
+# Download Node.js 22
+FROM base-builder AS node-22
 
-ARG JAVA21_VERSION=21.0.10+7
-ARG JAVA21_SHA256=a57fd486c3c24ed615eb91ef9421ddd38c720e7398df5a161872fb26ad825936 # https://api.adoptium.net/v3/assets/latest/21/hotspot?os=linux&architecture=riscv64&image_type=jdk
+ARG NODE22_VERSION=22.22.2
+ARG NODE22_SHA256=ffa6cd3702497badd03fc098df149d06d221ecd431acdda8c4a9d7c2cd05a783 # https://unofficial-builds.nodejs.org/download/release/v22.22.2/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
-    # Download Adoptium Temurin JDK 21 binary tarball
-    wget --progress=dot:giga "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jdk_riscv64_linux_hotspot_21.0.10_7.tar.gz" \
-        -O "openjdk-${JAVA21_VERSION}.tar.gz"
+    # Download Node.js 22 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE22_VERSION}/node-v${NODE22_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE22_VERSION}.tar.xz"
 
     # Verify package integrity
-    echo "${JAVA21_SHA256}  openjdk-${JAVA21_VERSION}.tar.gz" | sha256sum --check
+    echo "${NODE22_SHA256}  node-v${NODE22_VERSION}.tar.xz" | sha256sum --check
 
-    # Unpack to /opt/jdk-21
-    mkdir -p /opt/jdk-21
-    tar -xzf "openjdk-${JAVA21_VERSION}.tar.gz" -C /opt/jdk-21 --strip-components=1
+    # Unpack to ${RUNNER_TOOL_CACHE}/node/${NODE22_VERSION}/riscv64
+    mkdir -p ${RUNNER_TOOL_CACHE}/node/${NODE22_VERSION}/riscv64
+    tar -xJf "node-v${NODE22_VERSION}.tar.xz" -C ${RUNNER_TOOL_CACHE}/node/${NODE22_VERSION}/riscv64 --strip-components 1
 
     # Remove now-unnecessary tarball
-    rm "openjdk-${JAVA21_VERSION}.tar.gz"
+    rm "node-v${NODE22_VERSION}.tar.xz"
 
     # Smoke test
-    /opt/jdk-21/bin/java -version
+    ${RUNNER_TOOL_CACHE}/node/${NODE22_VERSION}/riscv64/bin/node --version
 EOF
 
-# Download Java 25
-FROM base-builder AS java-25
+# Download Node.js 24
+FROM base-builder AS node-24
 
-ARG JAVA25_VERSION=25.0.2+10
-ARG JAVA25_SHA256=168119e4fba350f4e6b3ca92450a2b90a8502b89a235a04415e9adf9f5d3164e # https://api.adoptium.net/v3/assets/latest/25/hotspot?os=linux&architecture=riscv64&image_type=jdk
+ARG NODE24_VERSION=24.14.1
+ARG NODE24_SHA256=b2527028055179c1e53db03803686f759b040409684273b72201fee0e6edd130 # https://unofficial-builds.nodejs.org/download/release/v24.14.1/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
-    # Download Adoptium Temurin JDK 25 binary tarball
-    wget --progress=dot:giga "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.2%2B10/OpenJDK25U-jdk_riscv64_linux_hotspot_25.0.2_10.tar.gz" \
-        -O "openjdk-${JAVA25_VERSION}.tar.gz"
+    # Download Node.js 24 binary tarball (unofficial riscv64 build)
+    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE24_VERSION}/node-v${NODE24_VERSION}-linux-riscv64.tar.xz" \
+        -O "node-v${NODE24_VERSION}.tar.xz"
 
     # Verify package integrity
-    echo "${JAVA25_SHA256}  openjdk-${JAVA25_VERSION}.tar.gz" | sha256sum --check
+    echo "${NODE24_SHA256}  node-v${NODE24_VERSION}.tar.xz" | sha256sum --check
 
-    # Unpack to /opt/jdk-25
-    mkdir -p /opt/jdk-25
-    tar -xzf "openjdk-${JAVA25_VERSION}.tar.gz" -C /opt/jdk-25 --strip-components=1
+    # Unpack to ${RUNNER_TOOL_CACHE}/node/${NODE24_VERSION}/riscv64
+    mkdir -p ${RUNNER_TOOL_CACHE}/node/${NODE24_VERSION}/riscv64
+    tar -xJf "node-v${NODE24_VERSION}.tar.xz" -C ${RUNNER_TOOL_CACHE}/node/${NODE24_VERSION}/riscv64 --strip-components 1
 
     # Remove now-unnecessary tarball
-    rm "openjdk-${JAVA25_VERSION}.tar.gz"
+    rm "node-v${NODE24_VERSION}.tar.xz"
 
     # Smoke test
-    /opt/jdk-25/bin/java -version
-EOF
-
-# Download Apache Ant
-FROM base-builder AS ant
-
-ARG ANT_VERSION=1.10.14
-ARG ANT_SHA512=4e74b382dd8271f9eac9fef69ba94751fb8a8356dbd995c4d642f2dad33de77bd37d4001d6c8f4f0ef6789529754968f0c1b6376668033c8904c6ec84543332a # https://archive.apache.org/dist/ant/binaries
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Apache Ant binary tarball
-    wget --progress=dot:giga https://archive.apache.org/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz
-
-    # Verify package integrity
-    echo "${ANT_SHA512}  apache-ant-${ANT_VERSION}-bin.tar.gz" | sha512sum --check
-
-    # Unpack to /opt/ant-${ANT_VERSION}
-    mkdir -p /opt/ant
-    tar -xzf apache-ant-${ANT_VERSION}-bin.tar.gz -C /opt/ant --strip-components=1
-
-    # Remove now-unnecessary tarball
-    rm apache-ant-${ANT_VERSION}-bin.tar.gz
+    ${RUNNER_TOOL_CACHE}/node/${NODE24_VERSION}/riscv64/bin/node --version
 EOF
 
 # Download Gradle
@@ -488,9 +482,8 @@ RUN bash -eux -o pipefail <<'EOF'
     # Verify package integrity
     echo "${GRADLE_SHA256}  gradle-${GRADLE_VERSION}-bin.zip" | sha256sum --check
 
-    # Unpack to /opt
-    unzip -q gradle-${GRADLE_VERSION}-bin.zip -d /opt
-    mv /opt/gradle-${GRADLE_VERSION} /opt/gradle
+    # Unpack to /usr/share
+    unzip -q gradle-${GRADLE_VERSION}-bin.zip -d /usr/share/gradle-${GRADLE_VERSION}
 
     # Remove now-unnecessary zip
     rm gradle-${GRADLE_VERSION}-bin.zip
@@ -508,84 +501,11 @@ RUN bash -eux -o pipefail <<'EOF'
     # Verify package integrity
     echo "${MAVEN_SHA512}  apache-maven-${MAVEN_VERSION}-bin.tar.gz" | sha512sum --check
 
-    # Unpack to /opt/maven
-    mkdir -p /opt/maven
-    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /opt/maven --strip-components=1
+    # Unpack to /usr/share
+    tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /usr/share
 
     # Remove now-unnecessary tarball
     rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
-EOF
-
-# Download Node.js 20
-FROM base-builder AS node-20
-
-ARG NODE20_VERSION=20.20.2
-ARG NODE20_SHA256=97a1b381eb457a904973cd3fa7999feb4fded5d286f4da08bbd0bf112601b0f4 # https://unofficial-builds.nodejs.org/download/release/v20.20.2/SHASUMS256.txt
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Node.js 20 binary tarball (unofficial riscv64 build)
-    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE20_VERSION}/node-v${NODE20_VERSION}-linux-riscv64.tar.xz" \
-        -O "node-v${NODE20_VERSION}.tar.xz"
-
-    # Verify package integrity
-    echo "${NODE20_SHA256}  node-v${NODE20_VERSION}.tar.xz" | sha256sum --check
-
-    # Unpack to /opt/node-20
-    mkdir -p /opt/node-20
-    tar -xJf "node-v${NODE20_VERSION}.tar.xz" -C /opt/node-20 --strip-components 1
-
-    # Remove now-unnecessary tarball
-    rm "node-v${NODE20_VERSION}.tar.xz"
-
-    # Smoke test
-    /opt/node-20/bin/node --version
-EOF
-
-# Download Node.js 22
-FROM base-builder AS node-22
-
-ARG NODE22_VERSION=22.22.2
-ARG NODE22_SHA256=ffa6cd3702497badd03fc098df149d06d221ecd431acdda8c4a9d7c2cd05a783 # https://unofficial-builds.nodejs.org/download/release/v22.22.2/SHASUMS256.txt
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Node.js 22 binary tarball (unofficial riscv64 build)
-    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE22_VERSION}/node-v${NODE22_VERSION}-linux-riscv64.tar.xz" \
-        -O "node-v${NODE22_VERSION}.tar.xz"
-
-    # Verify package integrity
-    echo "${NODE22_SHA256}  node-v${NODE22_VERSION}.tar.xz" | sha256sum --check
-
-    # Unpack to /opt/node-22
-    mkdir -p /opt/node-22
-    tar -xJf "node-v${NODE22_VERSION}.tar.xz" -C /opt/node-22 --strip-components 1
-
-    # Remove now-unnecessary tarball
-    rm "node-v${NODE22_VERSION}.tar.xz"
-
-    # Smoke test
-    /opt/node-22/bin/node --version
-EOF
-
-# Download Node.js 24
-FROM base-builder AS node-24
-
-ARG NODE24_VERSION=24.14.1
-ARG NODE24_SHA256=b2527028055179c1e53db03803686f759b040409684273b72201fee0e6edd130 # https://unofficial-builds.nodejs.org/download/release/v24.14.1/SHASUMS256.txt
-RUN bash -eux -o pipefail <<'EOF'
-    # Download Node.js 24 binary tarball (unofficial riscv64 build)
-    wget --progress=dot:giga "https://unofficial-builds.nodejs.org/download/release/v${NODE24_VERSION}/node-v${NODE24_VERSION}-linux-riscv64.tar.xz" \
-        -O "node-v${NODE24_VERSION}.tar.xz"
-
-    # Verify package integrity
-    echo "${NODE24_SHA256}  node-v${NODE24_VERSION}.tar.xz" | sha256sum --check
-
-    # Unpack to /opt/node-24
-    mkdir -p /opt/node-24
-    tar -xJf "node-v${NODE24_VERSION}.tar.xz" -C /opt/node-24 --strip-components 1
-
-    # Remove now-unnecessary tarball
-    rm "node-v${NODE24_VERSION}.tar.xz"
-
-    # Smoke test
-    /opt/node-24/bin/node --version
 EOF
 
 # Download Rust 1.94.0
@@ -593,8 +513,8 @@ FROM base-builder AS rust
 
 ARG RUSTUP_VERSION=1.29.0
 ARG RUSTTOOLCHAIN_VERSION=1.94.1
-ENV RUSTUP_HOME=/opt/rust/rustup
-ENV CARGO_HOME=/opt/rust/cargo
+ENV RUSTUP_HOME=/build/rust/rustup
+ENV CARGO_HOME=/build/rust/cargo
 RUN bash -eux -o pipefail <<'EOF'
     wget --progress=dot:giga -O - https://sh.rustup.rs | sh -s -- \
         -y \
@@ -602,12 +522,13 @@ RUN bash -eux -o pipefail <<'EOF'
         --component rustfmt
 EOF
 
+ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
+
 # Build sccache 0.14.0 (with gha caching support)
 FROM rust AS sccache
 
 ARG SCCACHE_VERSION=0.14.0
 RUN bash -eux -o pipefail <<'EOF'
-    export PATH="${CARGO_HOME}/bin:${PATH}"
     cargo install --no-default-features --features=gha,s3 sccache@${SCCACHE_VERSION}
 EOF
 
@@ -650,26 +571,22 @@ EOF
 # Build GitHub CLI v2.87.3
 FROM go-1.26 AS gh
 
+WORKDIR /build
+
 ARG GH_VERSION=2.89.0
 RUN bash -eux -o pipefail <<'EOF'
     # Download GitHub CLI v2.87.3
-    git clone --recurse-submodules --depth 1 https://github.com/cli/cli.git -b v${GH_VERSION}
-    pushd cli
+    git clone --recurse-submodules --depth 1 https://github.com/cli/cli.git -b v${GH_VERSION} gh
+    pushd gh
 
-    # Make sure Go 1.26 is on the PATH
-    export PATH=/opt/go-1.26/bin:${PATH}
-    go version
-
-    # Install to /opt/gh
-    export GO_LDFLAGS="-s -w" # reduce size of resulting binaries
-    make install prefix=/opt/gh
-
-    # Smoke test
-    /opt/gh/bin/gh version
+    # Build
+    make GO_LDFLAGS="-s -w"
 EOF
 
 # Build kubernetes 1.35.2
 FROM go-1.26 AS kubernetes
+
+WORKDIR /build
 
 ARG KUBECTL_VERSION=1.35.3
 RUN bash -eux -o pipefail <<'EOF'
@@ -677,21 +594,14 @@ RUN bash -eux -o pipefail <<'EOF'
     git clone --recurse-submodules --depth 1 https://github.com/kubernetes/kubernetes.git -b v${KUBECTL_VERSION}
     pushd kubernetes
 
-    # Make sure Go 1.26 is on the PATH
-    export PATH=/opt/go-1.26/bin:${PATH}
-    go version
-
-    # Install to /opt/kubernetes
+    # Build
     make WHAT="cmd/kubectl"
-    mkdir -p /opt/kubernetes/bin
-    cp _output/local/go/bin/* /opt/kubernetes/bin/
-
-    # Smoke test
-    /opt/kubernetes/bin/kubectl version --client
 EOF
 
 # Build ninja 1.13.2
 FROM base-builder AS ninja
+
+WORKDIR /build
 
 ARG NINJA_VERSION=1.13.2
 RUN bash -eux -o pipefail <<'EOF'
@@ -699,13 +609,9 @@ RUN bash -eux -o pipefail <<'EOF'
     git clone --recurse-submodules --depth 1 https://github.com/ninja-build/ninja.git -b v${NINJA_VERSION}
     pushd ninja
 
-    # Install to /opt/ninja
-    cmake -Bbuild -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/opt/ninja
-    cmake --build build
-    cmake --install build
-
-    # Smoke test
-    /opt/ninja/bin/ninja --version
+    # Install to /usr/local
+    cmake -Bbuild -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
+    cmake --build build --parallel
 EOF
 
 ##########################################
@@ -714,10 +620,14 @@ EOF
 ARG OS_VERSION=latest
 FROM docker.io/ubuntu:${OS_VERSION}
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN bash -eux -o pipefail <<'EOF'
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
         sudo \
+        cmake \
+        make \
      && true
 
     rm -rf /var/lib/apt/lists/*
@@ -728,171 +638,191 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
 EOF
 
+ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
+ENV RUNNER_OS=Linux
+ENV RUNNER_ARCH=RISCV64
+
 # Install Python 3.10-3.14
-
-COPY --from=python-3.10 /opt/python-3.10 /opt/python-3.10
-COPY --from=python-3.11 /opt/python-3.11 /opt/python-3.11
-COPY --from=python-3.12 /opt/python-3.12 /opt/python-3.12
-COPY --from=python-3.13 /opt/python-3.13 /opt/python-3.13
-COPY --from=python-3.13t /opt/python-3.13t /opt/python-3.13t
-COPY --from=python-3.14 /opt/python-3.14 /opt/python-3.14
-COPY --from=python-3.14t /opt/python-3.14t /opt/python-3.14t
-
-# FIXME: figure out whether/how to have the free-threaded versions on the PATH
-ENV PATH=/opt/python-3.10/bin:/opt/python-3.11/bin:/opt/python-3.12/bin:/opt/python-3.13/bin:/opt/python-3.14/bin:${PATH}
-# Set python-3.12 as the default version
-ENV pythonLocation=/opt/python-3.12
-ENV Python_ROOT_DIR=${pythonLocation}
-ENV Python2_ROOT_DIR=${pythonLocation}
-ENV Python3_ROOT_DIR=${pythonLocation}
-ENV PATH=${pythonLocation}/bin:${PATH}
+ARG PYTHON310_VERSION=3.10.20
+COPY --from=python-3.10 ${RUNNER_TOOL_CACHE}/Python/${PYTHON310_VERSION}/riscv64 ${RUNNER_TOOL_CACHE}/Python/${PYTHON310_VERSION}/riscv64
+ARG PYTHON311_VERSION=3.11.15
+COPY --from=python-3.11 ${RUNNER_TOOL_CACHE}/Python/${PYTHON311_VERSION}/riscv64 ${RUNNER_TOOL_CACHE}/Python/${PYTHON311_VERSION}/riscv64
+ARG PYTHON312_VERSION=3.12.13
+COPY --from=python-3.12 ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION}/riscv64 ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION}/riscv64
+ARG PYTHON313_VERSION=3.13.12
+COPY --from=python-3.13 ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}/riscv64 ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}/riscv64
+COPY --from=python-3.13t ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}-freethreaded/riscv64 ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}-freethreaded/riscv64
+ARG PYTHON314_VERSION=3.14.3
+COPY --from=python-3.14 ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}/riscv64 ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}/riscv64
+COPY --from=python-3.14t ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}-freethreaded/riscv64 ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}-freethreaded/riscv64
 
 # Install Go 1.22-1.25
-COPY --from=go-1.22 /opt/go-1.22 /opt/go-1.22
-COPY --from=go-1.23 /opt/go-1.23 /opt/go-1.23
-COPY --from=go-1.24 /opt/go-1.24 /opt/go-1.24
-COPY --from=go-1.25 /opt/go-1.25 /opt/go-1.25
+ARG GO122_VERSION=1.22.12
+COPY --from=go-1.22 ${RUNNER_TOOL_CACHE}/go/${GO122_VERSION}/riscv64 ${RUNNER_TOOL_CACHE}/go/${GO122_VERSION}/riscv64
+ENV GOROOT_1_22_RISCV64=${RUNNER_TOOL_CACHE}/go/${GO122_VERSION}/riscv64
+ARG GO123_VERSION=1.23.12
+COPY --from=go-1.23 ${RUNNER_TOOL_CACHE}/go/${GO123_VERSION}/riscv64 ${RUNNER_TOOL_CACHE}/go/${GO123_VERSION}/riscv64
+ENV GOROOT_1_23_RISCV64=${RUNNER_TOOL_CACHE}/go/${GO123_VERSION}/riscv64
+ARG GO124_VERSION=1.24.13
+COPY --from=go-1.24 ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}/riscv64 ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}/riscv64
+ENV GOROOT_1_24_RISCV64=${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}/riscv64
+ARG GO125_VERSION=1.25.8
+COPY --from=go-1.25 ${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}/riscv64 ${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}/riscv64
+ENV GOROOT_1_25_RISCV64=${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}/riscv64
+
 RUN bash -eux -o pipefail <<'EOF'
-    # Make Go 1.24 the default go binary
-    # Set up update-alternatives for go and gofmt
-    update-alternatives --install /usr/bin/go go /opt/go-1.22/bin/go 22 \
-        --slave /usr/bin/gofmt gofmt /opt/go-1.22/bin/gofmt
-    update-alternatives --install /usr/bin/go go /opt/go-1.23/bin/go 23 \
-        --slave /usr/bin/gofmt gofmt /opt/go-1.23/bin/gofmt
-    update-alternatives --install /usr/bin/go go /opt/go-1.24/bin/go 100 \
-        --slave /usr/bin/gofmt gofmt /opt/go-1.24/bin/gofmt
-    update-alternatives --install /usr/bin/go go /opt/go-1.25/bin/go 25 \
-        --slave /usr/bin/gofmt gofmt /opt/go-1.25/bin/gofmt
+    update-alternatives --install /usr/bin/go go ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}/riscv64/bin/go 100 \
+        --slave /usr/bin/gofmt gofmt ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}/riscv64/bin/gofmt
 EOF
 
-# Install Java 17, 21, 25
-COPY --from=java-17 /opt/jdk-17 /opt/jdk-17
-COPY --from=java-21 /opt/jdk-21 /opt/jdk-21
-COPY --from=java-25 /opt/jdk-25 /opt/jdk-25
-ENV JAVA_HOME_17_RISCV64=/opt/jdk-17
-ENV JAVA_HOME_21_RISCV64=/opt/jdk-21
-ENV JAVA_HOME_25_RISCV64=/opt/jdk-25
-ENV JAVA_HOME=/opt/jdk-25
-ENV PATH=${JAVA_HOME}/bin:${PATH}
-
-# Install Apache Ant
-COPY --from=ant /opt/ant /opt/ant
-ENV ANT_HOME=/opt/ant
-ENV PATH=${ANT_HOME}/bin:${PATH}
-
-# Install Gradle
-COPY --from=gradle /opt/gradle /opt/gradle
-ENV GRADLE_HOME=/opt/gradle
-ENV PATH=${GRADLE_HOME}/bin:${PATH}
-
-# Install Apache Maven
-COPY --from=maven /opt/maven /opt/maven
-ENV MAVEN_HOME=/opt/maven
-ENV PATH=${MAVEN_HOME}/bin:${PATH}
+# Install Java environment variables
+ENV JAVA_HOME_17_RISCV64=/usr/lib/jvm/temurin-17-jdk-riscv64/
+ENV JAVA_HOME_21_RISCV64=/usr/lib/jvm/temurin-21-jdk-riscv64/
+ENV JAVA_HOME_25_RISCV64=/usr/lib/jvm/temurin-25-jdk-riscv64/
+ENV JAVA_HOME=${JAVA_HOME_17_RISCV64}
 
 # Install Node 20, 22, 24
-COPY --from=node-20 /opt/node-20 /opt/node-20
-COPY --from=node-22 /opt/node-22 /opt/node-22
-COPY --from=node-24 /opt/node-24 /opt/node-24
-RUN bash -eux -o pipefail <<'EOF'
-    # Make Node 20 the default version
-    update-alternatives --install /usr/bin/node node /opt/node-20/bin/node 100 \
-        --slave /usr/bin/npm npm /opt/node-20/bin/npm \
-        --slave /usr/bin/npx npx /opt/node-20/bin/npx \
-        --slave /usr/bin/corepack corepack /opt/node-20/bin/corepack
-    update-alternatives --install /usr/bin/node node /opt/node-22/bin/node 22 \
-        --slave /usr/bin/npm npm /opt/node-22/bin/npm \
-        --slave /usr/bin/npx npx /opt/node-22/bin/npx \
-        --slave /usr/bin/corepack corepack /opt/node-22/bin/corepack
-    update-alternatives --install /usr/bin/node node /opt/node-24/bin/node 24 \
-        --slave /usr/bin/npm npm /opt/node-24/bin/npm \
-        --slave /usr/bin/npx npx /opt/node-24/bin/npx \
-        --slave /usr/bin/corepack corepack /opt/node-24/bin/corepack
-EOF
+ARG NODE20_VERSION=20.20.2
+COPY --from=node-20 ${RUNNER_TOOL_CACHE}/node/${NODE20_VERSION/}/riscv64 ${RUNNER_TOOL_CACHE}/node/${NODE20_VERSION/}/riscv64
+ARG NODE22_VERSION=22.22.2
+COPY --from=node-22 ${RUNNER_TOOL_CACHE}/node/${NODE22_VERSION}/riscv64 ${RUNNER_TOOL_CACHE}/node/${NODE22_VERSION}/riscv64
+ARG NODE24_VERSION=24.14.1
+COPY --from=node-24 ${RUNNER_TOOL_CACHE}/node/${NODE24_VERSION}/riscv64 ${RUNNER_TOOL_CACHE}/node/${NODE24_VERSION}/riscv64
+
+# Install Gradle
+ARG GRADLE_VERSION=9.4.1
+COPY --from=gradle /usr/share/gradle-${GRADLE_VERSION} /usr/share/gradle-${GRADLE_VERSION}
+ENV GRADLE_HOME=/usr/share/gradle-${GRADLE_VERSION}
+
+# Install Apache Maven
+ARG MAVEN_VERSION=3.9.14
+COPY --from=maven /usr/share/apache-maven-${MAVEN_VERSION} /usr/share/apache-maven-${MAVEN_VERSION}
+ENV MAVEN_HOME=/usr/share/apache-maven-${MAVEN_VERSION}
 
 # Install Docker CLI Plugins
 COPY --from=docker-compose /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
 COPY --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx
 
-# Install GitHub CLI
-COPY --from=gh /opt/gh /opt/gh
-ENV PATH=/opt/gh/bin:${PATH}
+# Install gh
+RUN --mount=type=cache,from=gh,source=/build/gh,target=/build/gh \
+  bash -eux -o pipefail <<'EOF'
+    pushd /build/gh
+    make install prefix=/usr
+EOF
 
-# Install Kubernetes
-COPY --from=kubernetes /opt/kubernetes /opt/kubernetes
-ENV PATH=/opt/kubernetes/bin:${PATH}
+# Install kubernetes
+COPY --from=kubernetes /build/kubernetes/_output/local/go/bin/* /usr/local/bin
 
 # Install ninja
-COPY --from=ninja /opt/ninja /opt/ninja
-ENV PATH=/opt/ninja/bin:${PATH}
+RUN --mount=type=cache,from=ninja,source=/build/ninja,target=/build/ninja \
+  bash -eux -o pipefail <<'EOF'
+    pushd /build/ninja
+    cmake --install build
+EOF
 
 # Install Rust; it needs a runner user-writable location
-COPY --from=rust --chown=runner:runner /opt/rust/rustup /home/runner/.rustup
-COPY --from=rust --chown=runner:runner /opt/rust/cargo /home/runner/.cargo
+COPY --from=rust --chown=runner:runner /build/rust/rustup /home/runner/.rustup
+COPY --from=rust --chown=runner:runner /build/rust/cargo /home/runner/.cargo
 ENV RUSTUP_HOME=/home/runner/.rustup
 ENV CARGO_HOME=/home/runner/.cargo
 ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
 
 # Install sccache
-COPY --from=sccache --chown=runner:runner /opt/rust/cargo/bin/sccache ${CARGO_HOME}/bin/sccache
+COPY --from=sccache --chown=runner:runner /build/rust/cargo/bin/sccache ${CARGO_HOME}/bin/sccache
 
 # Setup PATH for local installs
 ENV PATH=/home/runner/.local/bin:${PATH}
 
 # Install all packages from Ubuntu registries
-ENV DEBIAN_FRONTEND=noninteractive
 RUN bash -eux -o pipefail <<'EOF'
     # Get information about current OS
     source /etc/os-release
 
     apt-get update -qq
     apt-get install -qq -y --no-install-recommends \
+        wget \
+        apt-transport-https \
+        gpg \
+     && true
+
+    # Setup Temurin Repository
+    wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public \
+        | gpg --dearmor \
+        | tee /etc/apt/trusted.gpg.d/adoptium.gpg >/dev/null
+    echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" \
+        | tee /etc/apt/sources.list.d/adoptium.list
+
+    apt-get update -qq
+    apt-get install -qq -y --no-install-recommends \
         acl \
+        ant \
+        ant-optional \
+        apache2 \
+        apt \
+        apt-transport-https \
         aria2 \
         autoconf \
         automake \
+        azure-vm-utils \
+        base-files \
+        bash \
         binutils \
         bison \
         brotli \
+        bsdutils \
         build-essential \
+        buildah \
         bzip2 \
         ca-certificates \
         ccache \
+        chrony \
+        cifs-utils \
         clang-{16,17,18} \
-        clang-tidy-{16,17,18} \
         clang-format-{16,17,18} \
+        clang-tidy-{16,17,18} \
+        cloud-init \
         cmake \
         coreutils \
         curl \
+        dash \
         dbus \
+        diffutils \
         dnsutils \
         docker-cli \
         docker-compose \
         dpkg \
         dpkg-dev \
+        eatmydata \
+        efibootmgr \
         fakeroot \
         file \
         findutils \
         flex \
         fonts-noto-color-emoji \
         ftp \
-        g++-12 \
-        g++-13 \
-        g++-14 \
+        g++ \
+        g++-{12,13,14} \
         gettext-base \
-        gcc-12 \
-        gcc-13 \
-        gcc-14 \
+        gcc \
+        gcc-{12,13,14} \
+        gettext-base \
+        gfortran \
+        gfortran-12 \
+        gfortran-13 \
+        gfortran-14 \
+        gh \
         git \
+        git-ftp \
         git-lfs \
+        gnupg \
         gnupg2 \
         haveged \
         iproute2 \
         iputils-ping \
         jq \
         libatomic1 \
-        libclang-{16,17,18}-dev \
         libbz2-1.0 \
+        libclang-{16,17,18}-dev \
         libexpat1 \
         libffi8 \
         libgdbm6 \
@@ -919,36 +849,84 @@ RUN bash -eux -o pipefail <<'EOF'
         p7zip-full \
         parallel \
         patchelf \
+        php8.3-pgsql \
+        php8.3-phpdbg \
+        php8.3-pspell \
+        php8.3-readline \
+        php8.3-redis \
+        php8.3-snmp \
+        php8.3-soap \
+        php8.3-sqlite3 \
+        php8.3-sybase \
+        php8.3-tidy \
+        php8.3-xdebug \
+        php8.3-xml \
+        php8.3-xsl \
+        php8.3-yaml \
+        php8.3-zip \
+        php8.3-zmq \
         pigz \
         pkg-config \
+        podman \
         pollinate \
+        postgresql-16 \
+        python-babel-localedata \
         python-is-python3 \
+        python3 \
+        python3-babel \
+        python3-dev \
+        python3-jinja2 \
+        python3-json-pointer \
+        python3-jsonpatch \
+        python3-jsonschema \
+        python3-markupsafe \
+        python3-parted \
+        python3-pip \
+        python3-pyrsistent \
+        python3-serial \
+        python3-six \
+        python3-tz \
+        python3-venv \
         rpm \
         rsync \
+        ruby-full \
         shellcheck \
+        skopeo \
+        snmp \
         software-properties-common \
         sphinxsearch \
         sqlite3 \
         ssh \
+        ssh-import-id \
         sshpass \
         sudo \
         swig \
+        sysstat \
         systemd-coredump \
         tar \
         telnet \
+        temurin-17-jdk \
+        temurin-21-jdk \
+        temurin-25-jdk \
         texinfo \
         time \
         tk \
         tree \
         tzdata \
+        ubuntu-minimal \
+        ubuntu-server \
+        ubuntu-standard \
         unzip \
         upx \
+        upx-ucl \
+        util-linux \
         uuid-runtime \
         wget \
         xvfb \
         xz-utils \
         zip \
         zlib1g \
+        zlib1g-dev \
         zsync \
      && true
 
