@@ -453,7 +453,7 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "${SCCACHE_SHA256}  sccache-v${SCCACHE_VERSION}-riscv64gc-unknown-linux-musl.tar.gz" | sha256sum --check
 
     # Unpack to ${CARGO_HOME}/bin/sccache
-    tar -xzf sccache-v${SCCACHE_VERSION}-riscv64gc-unknown-linux-musl.tar.gz -C ${CARGO_HOME}/bin --strip-components 1 sccache-v${SCCACHE_VERSION}-riscv64gc-unknown-linux-musl/sccache
+    tar -xvzf sccache-v${SCCACHE_VERSION}-riscv64gc-unknown-linux-musl.tar.gz -C ${CARGO_HOME}/bin --strip-components 1 sccache-v${SCCACHE_VERSION}-riscv64gc-unknown-linux-musl/sccache
 
     # Remove now-unnecessary tarball
     rm sccache-v${SCCACHE_VERSION}-riscv64gc-unknown-linux-musl.tar.gz
