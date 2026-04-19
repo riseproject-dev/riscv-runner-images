@@ -487,7 +487,7 @@ EOF
 # Build GitHub CLI
 FROM go-1.26 AS gh
 
-WORKDIR /build
+WORKFIR /build
 
 ARG GH_VERSION=2.89.0
 RUN bash -eux -o pipefail <<'EOF'
@@ -528,6 +528,7 @@ RUN bash -eux -o pipefail <<'EOF'
     # Install to /usr/local
     cmake -Bbuild -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
     cmake --build build --parallel
+    cmake --install
 EOF
 
 ##########################################
@@ -542,8 +543,6 @@ RUN bash -eux -o pipefail <<'EOF'
     apt-get update
     apt-get install -y --no-install-recommends \
         sudo \
-        cmake \
-        make \
      && true
 
     rm -rf /var/lib/apt/lists/*
@@ -623,11 +622,7 @@ COPY --from=maven /usr/share/apache-maven-${MAVEN_VERSION} /usr/share/apache-mav
 ENV MAVEN_HOME=/usr/share/apache-maven-${MAVEN_VERSION}
 
 # Install ninja
-RUN --mount=from=ninja,source=/build/ninja,target=/build/ninja,rw \
-  bash -eux -o pipefail <<'EOF'
-    pushd /build/ninja
-    cmake --install build
-EOF
+COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/ninja
 
 # Install kubernetes
 COPY --from=kubernetes /build/kubernetes/_output/local/go/bin/* /usr/local/bin
