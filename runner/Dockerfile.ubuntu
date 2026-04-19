@@ -496,7 +496,7 @@ RUN bash -eux -o pipefail <<'EOF'
     pushd gh
 
     # Build
-    make bin/gh manpages completions GO_LDFLAGS="-s -w"
+    make install GO_LDFLAGS="-s -w" prefix=/usr
 EOF
 
 # Build kubernetes
@@ -541,7 +541,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN bash -eux -o pipefail <<'EOF'
     apt-get update
     apt-get install -y --no-install-recommends \
-        ca-certificates \
         sudo \
         cmake \
         make \
@@ -641,11 +640,7 @@ COPY --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr
 COPY --from=sccache --chown=runner:runner /build/rust/cargo/bin/sccache ${CARGO_HOME}/bin/sccache
 
 # Install gh
-RUN --mount=from=gh,source=/build/gh,target=/build/gh \
-  bash -eux -o pipefail <<'EOF'
-    pushd /build/gh
-    make install prefix=/usr
-EOF
+COPY --from=gh /usr/bin/gh /usr/bin/gh
 
 # Setup PATH for local installs
 ENV PATH=/home/runner/.local/bin:${PATH}
