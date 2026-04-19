@@ -487,7 +487,7 @@ EOF
 # Build GitHub CLI
 FROM go-1.26 AS gh
 
-WORKFIR /build
+WORKDIR /build
 
 ARG GH_VERSION=2.89.0
 RUN bash -eux -o pipefail <<'EOF'
