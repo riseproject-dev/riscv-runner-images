@@ -528,7 +528,7 @@ RUN bash -eux -o pipefail <<'EOF'
     # Install to /usr/local
     cmake -Bbuild -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
     cmake --build build --parallel
-    cmake --install
+    cmake --install build
 EOF
 
 ##########################################
