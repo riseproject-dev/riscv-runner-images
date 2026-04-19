@@ -496,7 +496,7 @@ RUN bash -eux -o pipefail <<'EOF'
     pushd gh
 
     # Build
-    make bin/gh manpages completions GO_LDFLAGS="-s -w"
+    make install GO_LDFLAGS="-s -w" prefix=/usr
 EOF
 
 # Build kubernetes
@@ -528,6 +528,7 @@ RUN bash -eux -o pipefail <<'EOF'
     # Install to /usr/local
     cmake -Bbuild -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local
     cmake --build build --parallel
+    cmake --install build
 EOF
 
 ##########################################
@@ -541,10 +542,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN bash -eux -o pipefail <<'EOF'
     apt-get update
     apt-get install -y --no-install-recommends \
-        ca-certificates \
         sudo \
-        cmake \
-        make \
      && true
 
     rm -rf /var/lib/apt/lists/*
@@ -624,11 +622,7 @@ COPY --from=maven /usr/share/apache-maven-${MAVEN_VERSION} /usr/share/apache-mav
 ENV MAVEN_HOME=/usr/share/apache-maven-${MAVEN_VERSION}
 
 # Install ninja
-RUN --mount=from=ninja,source=/build/ninja,target=/build/ninja,rw \
-  bash -eux -o pipefail <<'EOF'
-    pushd /build/ninja
-    cmake --install build
-EOF
+COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/ninja
 
 # Install kubernetes
 COPY --from=kubernetes /build/kubernetes/_output/local/go/bin/* /usr/local/bin
@@ -641,11 +635,7 @@ COPY --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr
 COPY --from=sccache --chown=runner:runner /build/rust/cargo/bin/sccache ${CARGO_HOME}/bin/sccache
 
 # Install gh
-RUN --mount=from=gh,source=/build/gh,target=/build/gh \
-  bash -eux -o pipefail <<'EOF'
-    pushd /build/gh
-    make install prefix=/usr
-EOF
+COPY --from=gh /usr/bin/gh /usr/bin/gh
 
 # Setup PATH for local installs
 ENV PATH=/home/runner/.local/bin:${PATH}
