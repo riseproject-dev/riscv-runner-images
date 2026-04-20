@@ -469,7 +469,7 @@ EOF
 # Download docker-buildx
 FROM base-builder AS docker-buildx
 
-ARG DOCKERBUILDX_VERSION=0.32.1
+ARG DOCKERBUILDX_VERSION=0.33.0
 ARG DOCKERBUILDX_SHA256=ff29d3ad8756d11c2fdfddf068d794615d52a2b052b0e2e50edbdbeaf11cbe42
 RUN bash -eux -o pipefail <<'EOF'
     # Download docker-buildx
