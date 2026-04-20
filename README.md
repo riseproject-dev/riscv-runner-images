@@ -27,7 +27,7 @@ We are aiming to match packages installed in the [official GitHub Actions runner
 
 Build args:
 - `OS_VERSION` — Ubuntu base image version (default: `latest`)
-- `RUNNER_VERSION` — GitHub Actions runner version (default: `2.331.0`)
+- `RUNNER_VERSION` — GitHub Actions runner version (default: `2.333.1`)
 
 ### Docker-in-Docker (`dind/Dockerfile`)
 
@@ -70,7 +70,7 @@ docker buildx build \
   --platform linux/riscv64 \
   --file runner/Dockerfile.ubuntu \
   --build-arg OS_VERSION=24.04 \
-  --build-arg RUNNER_VERSION=2.331.0 \
+  --build-arg RUNNER_VERSION=2.333.1 \
   --tag riscv-runner:ubuntu-24.04 \
   runner
 
