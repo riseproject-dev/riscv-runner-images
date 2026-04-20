@@ -142,13 +142,13 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "${PYTHON313_SHA256}  python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz" | sha256sum --check
 
     # Unpack tar file
-    mkdir -p ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}-freethreaded/riscv64
-    tar -xzf python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz -C ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}-freethreaded/riscv64
-    touch ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}-freethreaded/riscv64.complete
+    mkdir -p ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}/riscv64-freethreaded
+    tar -xzf python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz -C ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}/riscv64-freethreaded
+    touch ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}/riscv64-freethreaded.complete
     rm -f python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz
 
     # Smoke test
-    ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}-freethreaded/riscv64/bin/python3.13 --version
+    ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}/riscv64-freethreaded/bin/python3.13 --version
 EOF
 
 # Build Python 3.14
@@ -190,13 +190,13 @@ RUN bash -eux -o pipefail <<'EOF'
     echo "${PYTHON314_SHA256}  python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz" | sha256sum --check
 
     # Unpack tar file
-    mkdir -p ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}-freethreaded/riscv64
-    tar -xzf python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz -C ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}-freethreaded/riscv64
-    touch ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}-freethreaded/riscv64.complete
+    mkdir -p ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}/riscv64-freethreaded
+    tar -xzf python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz -C ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}/riscv64-freethreaded
+    touch ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}/riscv64-freethreaded.complete
     rm -f python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz
 
     # Smoke test
-    ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}-freethreaded/riscv64/bin/python3.14 --version
+    ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}/riscv64-freethreaded/bin/python3.14 --version
 EOF
 
 # Download Go 1.22
@@ -539,10 +539,10 @@ ARG PYTHON312_VERSION=3.12.13
 COPY --from=python-3.12 --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION}
 ARG PYTHON313_VERSION=3.13.12
 COPY --from=python-3.13 --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}
-COPY --from=python-3.13t --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}-freethreaded ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}-freethreaded
+COPY --from=python-3.13t --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}
 ARG PYTHON314_VERSION=3.14.3
 COPY --from=python-3.14 --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}
-COPY --from=python-3.14t --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}-freethreaded ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}-freethreaded
+COPY --from=python-3.14t --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}
 
 # Install Go
 ARG GO122_VERSION=1.22.12
