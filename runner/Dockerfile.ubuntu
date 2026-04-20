@@ -452,8 +452,8 @@ EOF
 # Download docker-buildx
 FROM base-builder AS docker-buildx
 
-ARG DOCKERBUILDX_VERSION=0.32.1
-ARG DOCKERBUILDX_SHA256=ff29d3ad8756d11c2fdfddf068d794615d52a2b052b0e2e50edbdbeaf11cbe42
+ARG DOCKERBUILDX_VERSION=0.33.0
+ARG DOCKERBUILDX_SHA256=5003b19409f2dfb38fc5f00a8eac4b1d810f6087b88ae007c6983287b93095dd # https://github.com/docker/buildx/releases/v${DOCKERBUILDX_VERSION}
 RUN bash -eux -o pipefail <<'EOF'
     # Download docker-buildx
     mkdir -p /usr/local/lib/docker/cli-plugins
