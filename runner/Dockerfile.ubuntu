@@ -838,7 +838,7 @@ USER runner
 ARG RUNNER_VERSION=2.331.0
 ARG RUNNER_SHA256=a04e8df62b31f1ae0aafcb28c8dedbd5e5a2f5b350abf67997ab44007dd0e691 # https://github.com/alitariq4589/github-runner-riscv/releases/tag/${RUNNER_VERSION}-riscv64-net8
 RUN bash -eux -o pipefail <<'EOF'
-    curl -fsSL --retry 25 --retry-all-errors https://github.com/alitariq4589/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz \
+    curl -fsSL --retry 25 --retry-all-errors https://github.com/Cloud-V-10xE/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz \
         -o actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz
 
     # Verify package integrity
