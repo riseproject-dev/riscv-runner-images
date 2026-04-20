@@ -137,6 +137,8 @@ jobs:
 
       - name: Build ${{ matrix.os }}-${{ matrix.os-version }} runner image
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        env:
+          SOURCE_DATE_EPOCH: 0 # No timestamps in layers
         with:
           context: runner
           file: runner/Dockerfile.${{ matrix.os }}
@@ -195,6 +197,8 @@ jobs:
 
       - name: Build dind image
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        env:
+          SOURCE_DATE_EPOCH: 0 # No timestamps in layers
         with:
           platforms: linux/riscv64
           context: dind
