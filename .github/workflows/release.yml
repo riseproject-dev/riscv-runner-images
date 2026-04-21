@@ -135,7 +135,7 @@ jobs:
           username: ${{ needs.setup.outputs.deploy-target == 'scw' && 'nologin' || github.actor }}
           password: ${{ needs.setup.outputs.deploy-target == 'scw' && secrets.SCW_SECRET_KEY || secrets.GITHUB_TOKEN }}
 
-      - name: Build ${{ matrix.os }}-${{ matrix.os-version }} runner image
+      - name: Build ${{ matrix.os }}-${{ matrix.os-version }}-${{ needs.setup.outputs.docker-tag-suffix }} runner image
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         env:
           SOURCE_DATE_EPOCH: 0 # No timestamps in layers
@@ -195,7 +195,7 @@ jobs:
           username: ${{ needs.setup.outputs.deploy-target == 'scw' && 'nologin' || github.actor }}
           password: ${{ needs.setup.outputs.deploy-target == 'scw' && secrets.SCW_SECRET_KEY || secrets.GITHUB_TOKEN }}
 
-      - name: Build dind image
+      - name: Build dind-${{ needs.setup.outputs.docker-tag-suffix }} image
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         env:
           SOURCE_DATE_EPOCH: 0 # No timestamps in layers
