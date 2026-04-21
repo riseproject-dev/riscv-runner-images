@@ -35,8 +35,8 @@ ARG OS_VERSION
 FROM base-builder AS python-3.10
 
 ARG PYTHON310_VERSION=3.10.20
-ARG PYTHON310_TAG=${PYTHON310_VERSION}-24017034265
-ARG PYTHON310_SHA256=7ce4c81b47a41b8a481489b7b09c6b506167250d38de1cb7770d29312cc4dab0 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON310_TAG}
+ARG PYTHON310_TAG=${PYTHON310_VERSION}-24741349542
+ARG PYTHON310_SHA256=f4d1a502c5f109d05a03333e14e4c0f0b92634c29de76613aaf42d0019b99cd5 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON310_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.10
     curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON310_TAG}/python-${PYTHON310_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
@@ -59,8 +59,8 @@ EOF
 FROM base-builder AS python-3.11
 
 ARG PYTHON311_VERSION=3.11.15
-ARG PYTHON311_TAG=${PYTHON311_VERSION}-24016555187
-ARG PYTHON311_SHA256=f3fad3b735d4863a9211f2976b066119baf608a36ad8c496d04d956db8a46e49 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON311_TAG}
+ARG PYTHON311_TAG=${PYTHON311_VERSION}-24739855755
+ARG PYTHON311_SHA256=4fbfb313efdf4faa4684100a0fde10919766a77c4463b98fe52c146c4b14e4a2 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON311_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.11
     curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON311_TAG}/python-${PYTHON311_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
@@ -83,8 +83,8 @@ EOF
 FROM base-builder AS python-3.12
 
 ARG PYTHON312_VERSION=3.12.13
-ARG PYTHON312_TAG=${PYTHON312_VERSION}-24015524754
-ARG PYTHON312_SHA256=296222f08e0bca0e385f8dc278945fba11908f19821727478271056164e82b8c # https://github.com/riseproject-dev/python-versions/releases/${PYTHON312_TAG}
+ARG PYTHON312_TAG=${PYTHON312_VERSION}-24738165632
+ARG PYTHON312_SHA256=377dd19847333f18e319ce1b5c0f90246646c81d9356050b08b82a366c5bb3f8 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON312_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.12
     curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON312_TAG}/python-${PYTHON312_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
@@ -107,8 +107,8 @@ EOF
 FROM base-builder AS python-3.13
 
 ARG PYTHON313_VERSION=3.13.12
-ARG PYTHON313_TAG=${PYTHON313_VERSION}-24030195242
-ARG PYTHON313_SHA256=655b94fcf21e4bef055cb4e5b7b8dd0b6fa93355543638512aeb64f0f417c664 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON313_TAG}
+ARG PYTHON313_TAG=${PYTHON313_VERSION}-24736470920
+ARG PYTHON313_SHA256=7a5a22471bbda70bb05653f742c0a0fa48217522fa96bdae46cf7c873c84b53f # https://github.com/riseproject-dev/python-versions/releases/${PYTHON313_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.13
     curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON313_TAG}/python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
@@ -131,8 +131,8 @@ EOF
 FROM base-builder AS python-3.13t
 
 ARG PYTHON313_VERSION=3.13.12
-ARG PYTHON313_TAG=${PYTHON313_VERSION}-24030195242
-ARG PYTHON313_SHA256=9a9c4b053af45814ca8886840ca477fa6f71099b180229c80accaf425da9b7b7 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON313_TAG}
+ARG PYTHON313_TAG=${PYTHON313_VERSION}-24736470920
+ARG PYTHON313_SHA256=95f48f3dae67339bc6755eea931d57fc58f84b76dd976a5a98222dcf3fb4c05d # https://github.com/riseproject-dev/python-versions/releases/${PYTHON313_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.13
     curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON313_TAG}/python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz \
@@ -155,8 +155,8 @@ EOF
 FROM base-builder AS python-3.14
 
 ARG PYTHON314_VERSION=3.14.3
-ARG PYTHON314_TAG=${PYTHON314_VERSION}-24027923780
-ARG PYTHON314_SHA256=46ea0268f112b88b86ea45ff69c5cbab354c9d834e94e2a7295961ed83ba9f57 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON314_TAG}
+ARG PYTHON314_TAG=${PYTHON314_VERSION}-24734614191
+ARG PYTHON314_SHA256=c6ed84e5e90e7fbd76c2f2f6ad1abedafaba97e226d765ca621b9c5cdced4f7c # https://github.com/riseproject-dev/python-versions/releases/${PYTHON314_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.14
     curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON314_TAG}/python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
@@ -179,8 +179,8 @@ EOF
 FROM base-builder AS python-3.14t
 
 ARG PYTHON314_VERSION=3.14.3
-ARG PYTHON314_TAG=${PYTHON314_VERSION}-24027923780
-ARG PYTHON314_SHA256=45e7ec63ed1510da253d3edef7b5f46e3c72e7f5486d5ae2c6d8e70f1726fe96 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON314_TAG}
+ARG PYTHON314_TAG=${PYTHON314_VERSION}-24734614191
+ARG PYTHON314_SHA256=1751c64f11401cdcafcdac355203af4cb85ef128d53cf177a2042b30b7004101 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON314_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.14
     curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON314_TAG}/python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz \
