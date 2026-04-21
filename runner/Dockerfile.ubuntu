@@ -735,7 +735,14 @@ ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
 ENV RUNNER_OS=Linux
 ENV RUNNER_ARCH=RISCV64
 
-RUN mkdir -p ${RUNNER_TOOL_CACHE} && chown runner:runner ${RUNNER_TOOL_CACHE}
+# Fix some specific directories' permissions
+RUN bash -eux -o pipefail <<'EOF'
+    # Make sure ${RUNNER_TOOL_CACHE} is writable by `runner`
+    mkdir -p ${RUNNER_TOOL_CACHE}
+    chown runner:runner ${RUNNER_TOOL_CACHE}
+    # Make sure /usr/local/bin is writetable by `runner`
+    chmod 777 /usr/local/bin
+EOF
 
 # Install Python
 ARG PYTHON310_VERSION=3.10.20
