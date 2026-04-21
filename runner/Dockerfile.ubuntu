@@ -285,7 +285,7 @@ RUN bash -eux -o pipefail <<'EOF'
     rm go${GO125_VERSION}.linux-riscv64.tar.gz
 EOF
 
-ENV PATH=${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}/riscv64/bingo-1.26:${PATH}
+ENV PATH=${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}/riscv64/bin:${PATH}
 
 # Download Go 1.26
 FROM base-builder AS go-1.26
@@ -726,7 +726,7 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf /var/lib/apt/lists/*
 
     # Add a user which will run the github actions
-    useradd -m runner # also creates a `runner` group
+    useradd -m -u 1001 runner # also creates a `runner` group
     # Add runner to sudoers without password prompt
     echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
 EOF
@@ -740,36 +740,34 @@ RUN bash -eux -o pipefail <<'EOF'
     # Make sure ${RUNNER_TOOL_CACHE} is writable by `runner`
     mkdir -p ${RUNNER_TOOL_CACHE}
     chown runner:runner ${RUNNER_TOOL_CACHE}
-    # Make sure /usr/local/bin is writetable by `runner`
-    chmod 777 /usr/local/bin
 EOF
 
 # Install Python
 ARG PYTHON310_VERSION=3.10.20
-COPY --from=python-3.10 --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON310_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON310_VERSION}
+COPY --link --from=python-3.10 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/Python/${PYTHON310_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON310_VERSION}
 ARG PYTHON311_VERSION=3.11.15
-COPY --from=python-3.11 --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON311_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON311_VERSION}
+COPY --link --from=python-3.11 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/Python/${PYTHON311_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON311_VERSION}
 ARG PYTHON312_VERSION=3.12.13
-COPY --from=python-3.12 --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION}
+COPY --link --from=python-3.12 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION}
 ARG PYTHON313_VERSION=3.13.12
-COPY --from=python-3.13 --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}
-COPY --from=python-3.13t --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}
+COPY --link --from=python-3.13 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}
+COPY --link --from=python-3.13t --chown=1001:1001 ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}
 ARG PYTHON314_VERSION=3.14.3
-COPY --from=python-3.14 --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}
-COPY --from=python-3.14t --chown=runner:runner ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}
+COPY --link --from=python-3.14 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}
+COPY --link --from=python-3.14t --chown=1001:1001 ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}
 
 # Install Go
 ARG GO122_VERSION=1.22.12
-COPY --from=go-1.22 --chown=runner:runner ${RUNNER_TOOL_CACHE}/go/${GO122_VERSION} ${RUNNER_TOOL_CACHE}/go/${GO122_VERSION}
+COPY --link --from=go-1.22 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/go/${GO122_VERSION} ${RUNNER_TOOL_CACHE}/go/${GO122_VERSION}
 ENV GOROOT_1_22_RISCV64=${RUNNER_TOOL_CACHE}/go/${GO122_VERSION}/riscv64
 ARG GO123_VERSION=1.23.12
-COPY --from=go-1.23 --chown=runner:runner ${RUNNER_TOOL_CACHE}/go/${GO123_VERSION} ${RUNNER_TOOL_CACHE}/go/${GO123_VERSION}
+COPY --link --from=go-1.23 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/go/${GO123_VERSION} ${RUNNER_TOOL_CACHE}/go/${GO123_VERSION}
 ENV GOROOT_1_23_RISCV64=${RUNNER_TOOL_CACHE}/go/${GO123_VERSION}/riscv64
 ARG GO124_VERSION=1.24.13
-COPY --from=go-1.24 --chown=runner:runner ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION} ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}
+COPY --link --from=go-1.24 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION} ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}
 ENV GOROOT_1_24_RISCV64=${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}/riscv64
 ARG GO125_VERSION=1.25.8
-COPY --from=go-1.25 --chown=runner:runner ${RUNNER_TOOL_CACHE}/go/${GO125_VERSION} ${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}
+COPY --link --from=go-1.25 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/go/${GO125_VERSION} ${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}
 ENV GOROOT_1_25_RISCV64=${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}/riscv64
 
 RUN bash -eux -o pipefail <<'EOF'
@@ -779,11 +777,11 @@ EOF
 
 # Install Node
 ARG NODE20_VERSION=20.20.2
-COPY --from=node-20 --chown=runner:runner ${RUNNER_TOOL_CACHE}/node/${NODE20_VERSION} ${RUNNER_TOOL_CACHE}/node/${NODE20_VERSION}
+COPY --link --from=node-20 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/node/${NODE20_VERSION} ${RUNNER_TOOL_CACHE}/node/${NODE20_VERSION}
 ARG NODE22_VERSION=22.22.2
-COPY --from=node-22 --chown=runner:runner ${RUNNER_TOOL_CACHE}/node/${NODE22_VERSION} ${RUNNER_TOOL_CACHE}/node/${NODE22_VERSION}
+COPY --link --from=node-22 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/node/${NODE22_VERSION} ${RUNNER_TOOL_CACHE}/node/${NODE22_VERSION}
 ARG NODE24_VERSION=24.14.1
-COPY --from=node-24 --chown=runner:runner ${RUNNER_TOOL_CACHE}/node/${NODE24_VERSION} ${RUNNER_TOOL_CACHE}/node/${NODE24_VERSION}
+COPY --link --from=node-24 --chown=1001:1001 ${RUNNER_TOOL_CACHE}/node/${NODE24_VERSION} ${RUNNER_TOOL_CACHE}/node/${NODE24_VERSION}
 
 # Install Java environment variables
 ENV JAVA_HOME_17_RISCV64=/usr/lib/jvm/temurin-17-jdk-riscv64/
@@ -792,15 +790,15 @@ ENV JAVA_HOME_25_RISCV64=/usr/lib/jvm/temurin-25-jdk-riscv64/
 ENV JAVA_HOME=${JAVA_HOME_17_RISCV64}
 
 # Install Rust; it needs a runner user-writable location
-COPY --from=rust --chown=runner:runner /build/rust/rustup /home/runner/.rustup
-COPY --from=rust --chown=runner:runner /build/rust/cargo /home/runner/.cargo
+COPY --link --from=rust --chown=1001:1001 /build/rust/rustup /home/runner/.rustup
+COPY --link --from=rust --chown=1001:1001 /build/rust/cargo /home/runner/.cargo
 ENV RUSTUP_HOME=/home/runner/.rustup
 ENV CARGO_HOME=/home/runner/.cargo
 ENV PATH=${RUSTUP_HOME}/bin:${CARGO_HOME}/bin:${PATH}
 
 # Install Gradle
 ARG GRADLE_VERSION=9.4.1
-COPY --from=gradle /usr/share/gradle-${GRADLE_VERSION} /usr/share/gradle-${GRADLE_VERSION}
+COPY --link --from=gradle /usr/share/gradle-${GRADLE_VERSION} /usr/share/gradle-${GRADLE_VERSION}
 ENV GRADLE_HOME=/usr/share/gradle-${GRADLE_VERSION}
 RUN bash -eux -o pipefail <<'EOF'
     update-alternatives --install /usr/bin/gradle gradle ${GRADLE_HOME}/bin/gradle 100
@@ -808,7 +806,7 @@ EOF
 
 # Install Apache Maven
 ARG MAVEN_VERSION=3.9.14
-COPY --from=maven /usr/share/apache-maven-${MAVEN_VERSION} /usr/share/apache-maven-${MAVEN_VERSION}
+COPY --link --from=maven /usr/share/apache-maven-${MAVEN_VERSION} /usr/share/apache-maven-${MAVEN_VERSION}
 ENV MAVEN_HOME=/usr/share/apache-maven-${MAVEN_VERSION}
 RUN bash -eux -o pipefail <<'EOF'
     update-alternatives --install /usr/bin/mvn mvn ${MAVEN_HOME}/bin/mvn 100 \
@@ -817,14 +815,22 @@ RUN bash -eux -o pipefail <<'EOF'
 EOF
 
 # Install ninja
-COPY --from=ninja /usr/local/bin/ninja /usr/local/bin/ninja
+COPY --link --from=ninja /usr/local/bin/ninja /usr/local/bin/ninja
 
 # Install kubernetes
-COPY --from=kubernetes /usr/local/bin/kubectl /usr/local/bin/kubectl
+COPY --link --from=kubernetes /usr/local/bin/kubectl /usr/local/bin/kubectl
 
 # Install Docker CLI Plugins
-COPY --from=docker-compose /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
-COPY --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx
+COPY --link --from=docker-compose /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
+COPY --link --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx
+
+# Fix some specific directories' permissions
+RUN bash -eux -o pipefail <<'EOF'
+    # Make sure /usr/local/bin is writable by `runner`
+    # --link Must come AFTER the COPY into /usr/local/bin, otherwise the COPY
+    # layer's dir metadata (default 0755 root:root) shadows the chmod.
+    chmod 777 /usr/local/bin
+EOF
 
 # Setup PATH for local installs
 ENV PATH=/home/runner/.local/bin:${PATH}
