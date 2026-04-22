@@ -119,6 +119,6 @@
   {
     "arg": "MOBY_VERSION",
     "json_tool": "Tools/Docker Server",
-    "dockerfile": "dind/Dockerfile"
+    "dockerfile": "runner/Dockerfile.ubuntu"
   }
 ]

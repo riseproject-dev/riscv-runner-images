@@ -21,46 +21,33 @@ The runner image includes:
 - Python 3.10, 3.11, 3.12 (default), 3.13, 3.13t (free threaded), 3.14, 3.14t (free threaded)
 - Apache Ant 1.10.14, Gradle 9.3.1, Apache Maven 3.9.12
 - Docker CLI, Docker Buildx, Docker Compose
+- Bundled `dockerd` + `containerd` (unified Docker-in-Docker — no sidecar required)
 - git, curl, wget, jq, sudo, and many more CLI tools
 
 We are aiming to match packages installed in the [official GitHub Actions runner images](https://github.com/actions/runner-images/blob/ubuntu24/20260302.42/images/ubuntu/Ubuntu2404-Readme.md). **Let us know if any package you depend on is missing!**
 
+The entrypoint (`runner/riscv-runner-entrypoint.sh`) uses `docker-init` (tini) as PID 1, starts `containerd` and `dockerd` in the background (unix socket, no TLS), then drops to the `runner` user to execute `./run.sh --jitconfig $RUNNER_JITCONFIG`. Because `dockerd` and the runner share the same filesystem, Docker bind mounts from inside jobs (e.g. `-v /home/runner/_work:/work`) work as expected.
+
 Build args:
 - `OS_VERSION` — Ubuntu base image version (default: `latest`)
-- `RUNNER_VERSION` — GitHub Actions runner version (default: `2.333.1`)
-
-### Docker-in-Docker (`dind/Dockerfile`)
-
-A minimal Docker-in-Docker sidecar image based on Debian (`riscv64/debian:latest`).
-
-| Tag | Base |
-|-----|------|
-| `riscv-runner:dind` | Debian |
-
-Runs `dockerd` via the bundled `dockerd-entrypoint.sh` (sourced from the [official Docker library](https://github.com/docker-library/docker)). Supports TLS certificate generation out of the box.
 
 ## Project Structure
 
 ```
 .
 ├── .github/workflows/
-│   └── release.yml          # CI: builds and pushes all images in parallel
+│   └── release.yml                    # CI: builds and pushes the runner image
 ├── runner/
-│   └── Dockerfile.ubuntu    # GitHub Actions runner image
-├── dind/
-│   ├── Dockerfile           # Docker-in-Docker sidecar image
-│   └── dockerd-entrypoint.sh
+│   ├── Dockerfile.ubuntu              # GitHub Actions runner image (unified DinD)
+│   └── riscv-runner-entrypoint.sh     # PID-1 entrypoint: starts containerd+dockerd, execs runner
 └── LICENSE
 ```
 
 ## CI/CD
 
-The GitHub Actions workflow (`.github/workflows/release.yml`) triggers on pushes to `main`, on a daily schedule, and manual dispatch. It uses a matrix strategy with two jobs:
+The GitHub Actions workflow (`.github/workflows/release.yml`) triggers on pushes to `main`, on a daily schedule, and manual dispatch. A single `build-runner` job builds Ubuntu 24.04 and 26.04 runner images via a matrix.
 
-- `build-runner` — builds Ubuntu 24.04 and 26.04 runner images (via matrix)
-- `build-dind` — builds the Docker-in-Docker sidecar image
-
-The Ubuntu 24.04 runner builds natively on `ubuntu-24.04-riscv` self-hosted runners. The Ubuntu 26.04 runner builds with QEMU cross-compilation on `ubuntu-latest`. All images are pushed to the Scaleway Container Registry. GitHub Actions cache (`type=gha`) is used to speed up builds. A concurrency group ensures only the latest run per branch executes.
+The Ubuntu 24.04 runner builds natively on `ubuntu-24.04-riscv` self-hosted runners. The Ubuntu 26.04 runner builds with QEMU cross-compilation on `ubuntu-latest`. Images are pushed to the Scaleway Container Registry. GitHub Actions cache (`type=gha`) is used to speed up builds. A concurrency group ensures only the latest run per branch executes.
 
 ## Building Locally
 
@@ -73,13 +60,6 @@ docker buildx build \
   --build-arg RUNNER_VERSION=2.333.1 \
   --tag riscv-runner:ubuntu-24.04 \
   runner
-
-# DinD image
-docker buildx build \
-  --platform linux/riscv64 \
-  --file dind/Dockerfile \
-  --tag riscv-runner:dind \
-  dind
 ```
 
 When cross-compiling, requires Docker with QEMU user-static registered (`docker run --rm --privileged multiarch/qemu-user-static --reset -p yes`).
