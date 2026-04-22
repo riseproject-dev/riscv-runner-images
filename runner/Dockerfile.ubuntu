@@ -44,7 +44,7 @@ ARG PYTHON310_TAG=${PYTHON310_VERSION}-24741349542
 ARG PYTHON310_SHA256=f4d1a502c5f109d05a03333e14e4c0f0b92634c29de76613aaf42d0019b99cd5 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON310_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.10
-    curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON310_TAG}/python-${PYTHON310_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON310_TAG}/python-${PYTHON310_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
         -o python-${PYTHON310_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz
 
     # Verify package integrity
@@ -68,7 +68,7 @@ ARG PYTHON311_TAG=${PYTHON311_VERSION}-24739855755
 ARG PYTHON311_SHA256=4fbfb313efdf4faa4684100a0fde10919766a77c4463b98fe52c146c4b14e4a2 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON311_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.11
-    curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON311_TAG}/python-${PYTHON311_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON311_TAG}/python-${PYTHON311_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
         -o python-${PYTHON311_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz
 
     # Verify package integrity
@@ -92,7 +92,7 @@ ARG PYTHON312_TAG=${PYTHON312_VERSION}-24738165632
 ARG PYTHON312_SHA256=377dd19847333f18e319ce1b5c0f90246646c81d9356050b08b82a366c5bb3f8 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON312_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.12
-    curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON312_TAG}/python-${PYTHON312_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON312_TAG}/python-${PYTHON312_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
         -o python-${PYTHON312_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz
 
     # Verify package integrity
@@ -116,7 +116,7 @@ ARG PYTHON313_TAG=${PYTHON313_VERSION}-24736470920
 ARG PYTHON313_SHA256=7a5a22471bbda70bb05653f742c0a0fa48217522fa96bdae46cf7c873c84b53f # https://github.com/riseproject-dev/python-versions/releases/${PYTHON313_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.13
-    curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON313_TAG}/python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON313_TAG}/python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
         -o python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz
 
     # Verify package integrity
@@ -140,7 +140,7 @@ ARG PYTHON313_TAG=${PYTHON313_VERSION}-24736470920
 ARG PYTHON313_SHA256=95f48f3dae67339bc6755eea931d57fc58f84b76dd976a5a98222dcf3fb4c05d # https://github.com/riseproject-dev/python-versions/releases/${PYTHON313_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.13
-    curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON313_TAG}/python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON313_TAG}/python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz \
         -o python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz
 
     # Verify package integrity
@@ -164,7 +164,7 @@ ARG PYTHON314_TAG=${PYTHON314_VERSION}-24734614191
 ARG PYTHON314_SHA256=c6ed84e5e90e7fbd76c2f2f6ad1abedafaba97e226d765ca621b9c5cdced4f7c # https://github.com/riseproject-dev/python-versions/releases/${PYTHON314_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.14
-    curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON314_TAG}/python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON314_TAG}/python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
         -o python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz
 
     # Verify package integrity
@@ -188,7 +188,7 @@ ARG PYTHON314_TAG=${PYTHON314_VERSION}-24734614191
 ARG PYTHON314_SHA256=1751c64f11401cdcafcdac355203af4cb85ef128d53cf177a2042b30b7004101 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON314_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.14
-    curl -fsSL --retry 25 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON314_TAG}/python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON314_TAG}/python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz \
         -o python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz
 
     # Verify package integrity
@@ -211,7 +211,7 @@ ARG GO122_VERSION=1.22.12
 ARG GO122_SHA256=f03a084aabc812fdc15b29acd5e1ee18e13b3c80be22aec43990119afcaf4947 # https://go.dev/dl/go1.22.12.linux-riscv64.tar.gz
 RUN bash -eux -o pipefail <<'EOF'
     # Download Go 1.22
-    curl -fsSL --retry 25 --retry-all-errors https://go.dev/dl/go${GO122_VERSION}.linux-riscv64.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://go.dev/dl/go${GO122_VERSION}.linux-riscv64.tar.gz \
         -o go${GO122_VERSION}.linux-riscv64.tar.gz
 
     # Verify package integrity
@@ -233,7 +233,7 @@ ARG GO123_VERSION=1.23.12
 ARG GO123_SHA256=5798eda8c167dd620feb54e1bcca1b4cc014a529821d8c01f31d7e17a43cb8ed # https://go.dev/dl/go1.23.12.linux-riscv64.tar.gz
 RUN bash -eux -o pipefail <<'EOF'
     # Download Go 1.23
-    curl -fsSL --retry 25 --retry-all-errors https://go.dev/dl/go${GO123_VERSION}.linux-riscv64.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://go.dev/dl/go${GO123_VERSION}.linux-riscv64.tar.gz \
         -o go${GO123_VERSION}.linux-riscv64.tar.gz
 
     # Verify package integrity
@@ -255,7 +255,7 @@ ARG GO124_VERSION=1.24.13
 ARG GO124_SHA256=9a8166261489d3f38c7a568785b7012c123e3561779d282d568a72d58506754f # https://go.dev/dl/go1.24.13.linux-riscv64.tar.gz
 RUN bash -eux -o pipefail <<'EOF'
     # Download Go 1.24
-    curl -fsSL --retry 25 --retry-all-errors https://go.dev/dl/go${GO124_VERSION}.linux-riscv64.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://go.dev/dl/go${GO124_VERSION}.linux-riscv64.tar.gz \
         -o go${GO124_VERSION}.linux-riscv64.tar.gz
 
     # Verify package integrity
@@ -277,7 +277,7 @@ ARG GO125_VERSION=1.25.8
 ARG GO125_SHA256=1f90bdfabbbf8060f048186f6355b2fb6a839aab499b61f790f90ee5367b05a5 # https://dl.google.com/go/go1.25.8.linux-riscv64.tar.gz.sha256
 RUN bash -eux -o pipefail <<'EOF'
     # Download Go 1.25
-    curl -fsSL --retry 25 --retry-all-errors https://go.dev/dl/go${GO125_VERSION}.linux-riscv64.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://go.dev/dl/go${GO125_VERSION}.linux-riscv64.tar.gz \
         -o go${GO125_VERSION}.linux-riscv64.tar.gz
 
     # Verify package integrity
@@ -299,7 +299,7 @@ ARG GO126_VERSION=1.26.1
 ARG GO126_SHA256=56f8a63ae986c75e91001d65e17648564a10f0d2b18d696d13c91e459da1abd4 # https://go.dev/dl/go1.26.1.linux-riscv64.tar.gz
 RUN bash -eux -o pipefail <<'EOF'
     # Download Go 1.26
-    curl -fsSL --retry 25 --retry-all-errors https://go.dev/dl/go${GO126_VERSION}.linux-riscv64.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://go.dev/dl/go${GO126_VERSION}.linux-riscv64.tar.gz \
         -o go${GO126_VERSION}.linux-riscv64.tar.gz
 
     # Verify package integrity
@@ -370,7 +370,7 @@ ARG NODE20_VERSION=20.20.2
 ARG NODE20_SHA256=97a1b381eb457a904973cd3fa7999feb4fded5d286f4da08bbd0bf112601b0f4 # https://unofficial-builds.nodejs.org/download/release/v20.20.2/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
     # Download Node.js 20
-    curl -fsSL --retry 25 --retry-all-errors "https://unofficial-builds.nodejs.org/download/release/v${NODE20_VERSION}/node-v${NODE20_VERSION}-linux-riscv64.tar.xz" \
+    curl -fsSL --retry 12 --retry-all-errors "https://unofficial-builds.nodejs.org/download/release/v${NODE20_VERSION}/node-v${NODE20_VERSION}-linux-riscv64.tar.xz" \
         -o "node-v${NODE20_VERSION}-linux-riscv64.tar.xz"
 
     # Verify package integrity
@@ -393,7 +393,7 @@ ARG NODE22_VERSION=22.22.2
 ARG NODE22_SHA256=ffa6cd3702497badd03fc098df149d06d221ecd431acdda8c4a9d7c2cd05a783 # https://unofficial-builds.nodejs.org/download/release/v22.22.2/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
     # Download Node.js 22
-    curl -fsSL --retry 25 --retry-all-errors "https://unofficial-builds.nodejs.org/download/release/v${NODE22_VERSION}/node-v${NODE22_VERSION}-linux-riscv64.tar.xz" \
+    curl -fsSL --retry 12 --retry-all-errors "https://unofficial-builds.nodejs.org/download/release/v${NODE22_VERSION}/node-v${NODE22_VERSION}-linux-riscv64.tar.xz" \
         -o "node-v${NODE22_VERSION}-linux-riscv64.tar.xz"
 
     # Verify package integrity
@@ -416,7 +416,7 @@ ARG NODE24_VERSION=24.14.1
 ARG NODE24_SHA256=b2527028055179c1e53db03803686f759b040409684273b72201fee0e6edd130 # https://unofficial-builds.nodejs.org/download/release/v24.14.1/SHASUMS256.txt
 RUN bash -eux -o pipefail <<'EOF'
     # Download Node.js 24
-    curl -fsSL --retry 25 --retry-all-errors "https://unofficial-builds.nodejs.org/download/release/v${NODE24_VERSION}/node-v${NODE24_VERSION}-linux-riscv64.tar.xz" \
+    curl -fsSL --retry 12 --retry-all-errors "https://unofficial-builds.nodejs.org/download/release/v${NODE24_VERSION}/node-v${NODE24_VERSION}-linux-riscv64.tar.xz" \
         -o "node-v${NODE24_VERSION}-linux-riscv64.tar.xz"
 
     # Verify package integrity
@@ -439,7 +439,7 @@ ARG GRADLE_VERSION=9.4.1
 ARG GRADLE_SHA256=2ab2958f2a1e51120c326cad6f385153bb11ee93b3c216c5fccebfdfbb7ec6cb # https://services.gradle.org/distributions/gradle-9.4.1-bin.zip.sha256
 RUN bash -eux -o pipefail <<'EOF'
     # Download Gradle
-    curl -fsSL --retry 25 --retry-all-errors https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip \
+    curl -fsSL --retry 12 --retry-all-errors https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip \
         -o gradle-${GRADLE_VERSION}-bin.zip
 
     # Verify package integrity
@@ -457,7 +457,7 @@ ARG MAVEN_VERSION=3.9.14
 ARG MAVEN_SHA512=d50af8ab5e6005b46a07f0ce9d3719e67cfdf898da988a84871304cd59fb1af0fef2f99dea709e6e66f21f732f905979b5c2dce6b6860406f60a70e84d9cf0b8 # https://archive.apache.org/dist/maven/maven-3/3.9.14/binaries/apache-maven-3.9.14-bin.tar.gz.sha512
 RUN bash -eux -o pipefail <<'EOF'
     # Download Apache Maven
-    curl -fsSL --retry 25 --retry-all-errors https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
+    curl -fsSL --retry 12 --retry-all-errors https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
         -o apache-maven-${MAVEN_VERSION}-bin.tar.gz
 
     # Verify package integrity
@@ -476,7 +476,7 @@ ARG RUSTTOOLCHAIN_VERSION=1.94.1
 ENV RUSTUP_HOME=/build/rust/rustup
 ENV CARGO_HOME=/build/rust/cargo
 RUN bash -eux -o pipefail <<'EOF'
-    curl -fsSL --retry 25 --retry-all-errors https://sh.rustup.rs | sh -s -- \
+    curl -fsSL --retry 12 --retry-all-errors https://sh.rustup.rs | sh -s -- \
         -y \
         --default-toolchain ${RUSTTOOLCHAIN_VERSION} \
         --profile minimal \
@@ -493,7 +493,7 @@ ARG DOCKERCOMPOSE_SHA256=67c65c4015db38b526b262cee9d98915f8fcb56b42be7926a21a7ec
 RUN bash -eux -o pipefail <<'EOF'
     # Download docker-compose v2
     mkdir -p /usr/local/lib/docker/cli-plugins
-    curl -fsSL --retry 25 --retry-all-errors "https://github.com/docker/compose/releases/download/v${DOCKERCOMPOSE_VERSION}/docker-compose-linux-riscv64" \
+    curl -fsSL --retry 12 --retry-all-errors "https://github.com/docker/compose/releases/download/v${DOCKERCOMPOSE_VERSION}/docker-compose-linux-riscv64" \
         -o "/usr/local/lib/docker/cli-plugins/docker-compose"
 
     # Verify package integrity
@@ -511,7 +511,7 @@ ARG DOCKERBUILDX_SHA256=5003b19409f2dfb38fc5f00a8eac4b1d810f6087b88ae007c6983287
 RUN bash -eux -o pipefail <<'EOF'
     # Download docker-buildx
     mkdir -p /usr/local/lib/docker/cli-plugins
-    curl -fsSL --retry 25 --retry-all-errors "https://github.com/docker/buildx/releases/download/v${DOCKERBUILDX_VERSION}/buildx-v${DOCKERBUILDX_VERSION}.linux-riscv64" \
+    curl -fsSL --retry 12 --retry-all-errors "https://github.com/docker/buildx/releases/download/v${DOCKERBUILDX_VERSION}/buildx-v${DOCKERBUILDX_VERSION}.linux-riscv64" \
         -o "/usr/local/lib/docker/cli-plugins/docker-buildx"
 
     # Verify package integrity
@@ -588,7 +588,7 @@ RUN bash -eux -o pipefail <<'EOF'
      && true
 
     # Setup Temurin Repository
-    curl -fsSL --retry 25 --retry-all-errors https://packages.adoptium.net/artifactory/api/gpg/key/public \
+    curl -fsSL --retry 12 --retry-all-errors https://packages.adoptium.net/artifactory/api/gpg/key/public \
         | gpg --dearmor \
         | tee /etc/apt/trusted.gpg.d/adoptium.gpg >/dev/null
     echo "deb https://packages.adoptium.net/artifactory/deb ${VERSION_CODENAME} main" \
@@ -914,7 +914,7 @@ RUN su --shell /bin/bash runner -- -eux -o pipefail <<'EOF'
 
     cd /home/runner
 
-    curl -fsSL --retry 25 --retry-all-errors "https://github.com/Cloud-V-10xE/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz" \
+    curl -fsSL --retry 12 --retry-all-errors "https://github.com/Cloud-V-10xE/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz" \
         -o "actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz"
 
     # Verify package integrity
