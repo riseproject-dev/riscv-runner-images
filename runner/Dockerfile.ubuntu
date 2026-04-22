@@ -7,10 +7,13 @@ FROM docker.io/ubuntu:${OS_VERSION} AS base-builder
 ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
 
 ENV DEBIAN_FRONTEND=noninteractive
+# reduce timestamps differences between layers
+ENV SOURCE_DATE_EPOCH=0
 
 RUN bash -eux -o pipefail <<'EOF'
     apt-get update
     apt-get install -y --no-install-recommends \
+        btrfs-progs \
         build-essential \
         ca-certificates \
         curl \
@@ -18,6 +21,8 @@ RUN bash -eux -o pipefail <<'EOF'
         g++ \
         gcc \
         git \
+        libdevmapper-dev \
+        libseccomp-dev \
         libssl-dev \
         make \
         pkg-config \
@@ -309,6 +314,55 @@ EOF
 
 ENV PATH=${RUNNER_TOOL_CACHE}/go/${GO126_VERSION}/riscv64/bin:${PATH}
 
+# Build moby (dockerd + docker-proxy)
+FROM go-1.24 AS moby
+
+WORKDIR /build
+
+ARG MOBY_VERSION=28.0.4
+RUN bash -eux -o pipefail <<'EOF'
+    # Download moby
+    git clone --depth 1 --branch "v${MOBY_VERSION}" https://github.com/moby/moby.git
+    pushd moby
+
+    # Build dockerd and docker-proxy
+    # hack/make.sh reads VERSION, DOCKER_BUILDTAGS, and DOCKER_GITCOMMIT to
+    # embed version info and select build features (seccomp for DinD).
+    export VERSION="${MOBY_VERSION}"
+    export DOCKER_BUILDTAGS="seccomp"
+    export DOCKER_GITCOMMIT=$(git rev-parse HEAD)
+    ./hack/make.sh binary
+
+    # Install to /usr/local
+    install -m 755 -p bundles/binary-daemon/dockerd /usr/local/bin/dockerd
+    install -m 755 -p bundles/binary-daemon/docker-proxy /usr/local/bin/docker-proxy
+
+    # Cleanup
+    popd
+    rm -rf moby
+EOF
+
+# Build docker-init (tini) - PID 1 reaper for the entrypoint
+FROM base-builder AS docker-init
+
+WORKDIR /build
+
+ARG TINI_VERSION=0.19.0
+RUN bash -eux -o pipefail <<'EOF'
+    # Download tini
+    git clone --depth 1 --branch "v${TINI_VERSION}" https://github.com/krallin/tini.git
+    pushd tini
+
+    # Build & install to /usr/local
+    cmake .
+    make tini-static
+    install -m 755 -p tini-static /usr/local/bin/docker-init
+
+    # Cleanup
+    popd
+    rm -rf tini
+EOF
+
 # Download Node.js 20
 FROM base-builder AS node-20
 
@@ -512,9 +566,18 @@ FROM docker.io/ubuntu:${OS_VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
+ENV RUNNER_OS=Linux
+ENV RUNNER_ARCH=RISCV64
+ARG RUNNER_VERSION=2.333.1
+ENV RUNNER_VERSION=${RUNNER_VERSION}
+
 RUN bash -eux -o pipefail <<'EOF'
     # Get information about current OS
     source /etc/os-release
+
+    # reduce timestamps differences between layers
+    export SOURCE_DATE_EPOCH=0
 
     apt-get update
     apt-get install -y --no-install-recommends \
@@ -561,6 +624,7 @@ RUN bash -eux -o pipefail <<'EOF'
         clang-tidy-{16,17,18} \
         cloud-init \
         cmake \
+        containerd \
         coreutils \
         curl \
         dash \
@@ -597,6 +661,7 @@ RUN bash -eux -o pipefail <<'EOF'
         gnupg2 \
         haveged \
         iproute2 \
+        iptables \
         iputils-ping \
         jq \
         libatomic1 \
@@ -625,6 +690,7 @@ RUN bash -eux -o pipefail <<'EOF'
         net-tools \
         netcat-openbsd \
         openssh-client \
+        openssl \
         p7zip-full \
         parallel \
         patchelf \
@@ -669,6 +735,7 @@ RUN bash -eux -o pipefail <<'EOF'
         rpm \
         rsync \
         ruby-full \
+        runc \
         shellcheck \
         skopeo \
         snmp \
@@ -727,14 +794,11 @@ RUN bash -eux -o pipefail <<'EOF'
     rm -rf /var/lib/{apt,dpkg,cache,log}/
 
     # Add a user which will run the github actions
-    useradd -m -u 1001 runner # also creates a `runner` group
+    groupadd -f docker
+    useradd -m -u 1001 -G docker runner # also creates a `runner` group
     # Add runner to sudoers without password prompt
     echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner
 EOF
-
-ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
-ENV RUNNER_OS=Linux
-ENV RUNNER_ARCH=RISCV64
 
 # Fix some specific directories' permissions
 RUN bash -eux -o pipefail <<'EOF'
@@ -825,6 +889,11 @@ COPY --link --from=kubernetes /usr/local/bin/kubectl /usr/local/bin/kubectl
 COPY --link --from=docker-compose /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
 COPY --link --from=docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx  /usr/local/lib/docker/cli-plugins/docker-buildx
 
+# Install dockerd, docker-proxy, and docker-init (tini)
+COPY --link --from=moby /usr/local/bin/dockerd /usr/local/bin/dockerd
+COPY --link --from=moby /usr/local/bin/docker-proxy /usr/local/bin/docker-proxy
+COPY --link --from=docker-init /usr/local/bin/docker-init /usr/local/bin/docker-init
+
 # Fix some specific directories' permissions
 RUN bash -eux -o pipefail <<'EOF'
     # Make sure /usr/local/bin is writable by `runner`
@@ -836,7 +905,8 @@ EOF
 # Setup PATH for local installs
 ENV PATH=/home/runner/.local/bin:${PATH}
 
-# Setup runner user
+COPY riscv-runner-entrypoint.sh /usr/local/bin/riscv-runner-entrypoint.sh
+
 WORKDIR /home/runner
 USER runner
 
@@ -844,8 +914,11 @@ USER runner
 ARG RUNNER_VERSION=2.333.1
 ARG RUNNER_SHA256=b7fe06dae879678b817dbd4286d3527ba3a8867641ea932a0609fb1eed392b7b # https://github.com/Cloud-V-10xE/github-runner-riscv/releases/tag/${RUNNER_VERSION}-riscv64-net8
 RUN bash -eux -o pipefail <<'EOF'
-    curl -fsSL --retry 12 --retry-all-errors https://github.com/Cloud-V-10xE/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz \
-        -o actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz
+    # reduce timestamps differences between layers
+    export SOURCE_DATE_EPOCH=0
+
+    curl -fsSL --retry 12 --retry-all-errors "https://github.com/Cloud-V-10xE/github-runner-riscv/releases/download/v${RUNNER_VERSION}-riscv64-net8/actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz" \
+        -o "actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz"
 
     # Verify package integrity
     echo "${RUNNER_SHA256} actions-runner-linux-riscv64-${RUNNER_VERSION}.tar.gz" | sha256sum --check
@@ -863,4 +936,4 @@ RUN bash -eux -o pipefail <<'EOF'
     sudo rm -rf /var/lib/{apt,dpkg,cache,log}/
 EOF
 
-ENV RUNNER_VERSION=${RUNNER_VERSION}
+ENTRYPOINT ["/usr/local/bin/docker-init", "--", "/usr/local/bin/riscv-runner-entrypoint.sh"]

@@ -155,66 +155,10 @@ jobs:
           path: |
             ${{ needs.setup.outputs.docker-output-file }}
 
-  build-dind:
-    runs-on: ubuntu-24.04-riscv
-    needs: [setup]
-    permissions:
-      packages: write
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Setup slog values of GitHub env variables
-        uses: rlespinasse/github-slug-action@e6f261660910b273384c5c42b17a0217881b217a # v5.6.0
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
-        with:
-          buildkitd-config-inline: |
-            [worker.oci]
-              max-parallelism = 2
-
-      - name: Login to Container Registry
-        if: ${{ needs.setup.outputs.docker-registry != '' }}
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
-        with:
-          registry: ${{ needs.setup.outputs.docker-registry }}
-          username: ${{ needs.setup.outputs.deploy-target == 'scw' && 'nologin' || github.actor }}
-          password: ${{ needs.setup.outputs.deploy-target == 'scw' && secrets.SCW_SECRET_KEY || secrets.GITHUB_TOKEN }}
-
-      - name: Build dind-${{ needs.setup.outputs.docker-tag-suffix }} image
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
-        env:
-          SOURCE_DATE_EPOCH: 0 # No timestamps in layers
-        with:
-          platforms: linux/riscv64
-          context: dind
-          tags: |
-            ${{ needs.setup.outputs.docker-registry != '' && format('{0}/riscv-runner:dind-{1}', needs.setup.outputs.docker-registry, needs.setup.outputs.docker-tag-suffix) || '' }}
-          cache-from: |
-            ${{ needs.setup.outputs.environment != '' && format('type=gha,scope=dind-{0}', needs.setup.outputs.environment) || '' }}
-            ${{ needs.setup.outputs.environment == '' && format('type=gha,scope=dind-staging') || '' }}
-          cache-to: |
-            ${{ needs.setup.outputs.environment != '' && format('type=gha,scope=dind-{0},mode=max', needs.setup.outputs.environment) || '' }}
-          push: ${{ needs.setup.outputs.docker-registry != '' }}
-          pull: ${{ needs.setup.outputs.environment != '' }}
-          outputs: ${{ needs.setup.outputs.docker-output }}
-
-      - name: Upload dind image
-        if: ${{ needs.setup.outputs.docker-output != '' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: dind-image
-          path: |
-            ${{ needs.setup.outputs.docker-output-file }}
-
   deploy:
     if: ${{ needs.setup.outputs.deploy-target == 'scw' && needs.setup.outputs.environment != '' }}
     runs-on: ubuntu-latest
-    needs: [setup, build-runner, build-dind]
+    needs: [setup, build-runner]
     environment: ${{ needs.setup.outputs.environment }}
     steps:
       - name: Set up kubeconfig
