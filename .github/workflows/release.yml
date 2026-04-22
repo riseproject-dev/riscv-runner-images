@@ -28,7 +28,6 @@ jobs:
       docker-output: ${{ steps.variables.outputs.docker-output }}
       docker-output-file: ${{ steps.variables.outputs.docker-output-file }}
       docker-tag-suffix: ${{ steps.variables.outputs.docker-tag-suffix }}
-      docker-cache: ${{ steps.variables.outputs.docker-cache }}
     steps:
       - name: Setup slog values of GitHub env variables
         uses: rlespinasse/github-slug-action@e6f261660910b273384c5c42b17a0217881b217a # v5.6.0
@@ -83,14 +82,6 @@ jobs:
             docker_tag_suffix="${{ env.GITHUB_REF_NAME_SLUG }}"
           fi
           echo "docker-tag-suffix=${docker_tag_suffix}" >> $GITHUB_OUTPUT
-
-          # Which Docker cache to use
-          if ${{ github.repository_owner == 'riseproject-dev' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}; then
-            docker_cache="type=s3,endpoint_url=https://s3.fr-par.scw.cloud,region=fr-par,bucket=rise-riscv-runner-ci-cache,name="
-          else
-            docker_cache="type=gha,scope="
-          fi
-          echo "docker-cache=${docker_cache}" >> $GITHUB_OUTPUT
 
   build-runner:
     strategy:
@@ -148,11 +139,10 @@ jobs:
           tags: |
             ${{ needs.setup.outputs.docker-registry != '' && format('{0}/riscv-runner:{1}-{2}-{3}', needs.setup.outputs.docker-registry, matrix.os, matrix.os-version, needs.setup.outputs.docker-tag-suffix) || '' }}
           cache-from: |
-            ${{ needs.setup.outputs.environment != '' && format('{0}runner-{1}-{2}-{3}', needs.setup.outputs.docker-cache, matrix.os, matrix.os-version, needs.setup.outputs.environment) || '' }}
-            ${{ needs.setup.outputs.environment == '' && format('{0}runner-{1}-{2}-staging', needs.setup.outputs.docker-cache, matrix.os, matrix.os-version) || '' }}
+            ${{ needs.setup.outputs.environment != '' && format('type=gha,scope=runner-{0}-{1}-{2}', matrix.os, matrix.os-version, needs.setup.outputs.environment) || '' }}
+            ${{ needs.setup.outputs.environment == '' && format('type=gha,scope=runner-{0}-{1}-staging', matrix.os, matrix.os-version) || '' }}
           cache-to: |
-            ${{ needs.setup.outputs.environment != '' && format('{0}runner-{1}-{2}-{3},mode=max', needs.setup.outputs.docker-cache, matrix.os, matrix.os-version, needs.setup.outputs.environment) || '' }}
-            ${{ needs.setup.outputs.environment == 'staging' && !startsWith(needs.setup.outputs.docker-cache, 'type=gha,') && format('type=gha,scope=runner-{0}-{1}-staging,mode=max', matrix.os, matrix.os-version) || '' }}
+            ${{ needs.setup.outputs.environment != '' && format('type=gha,scope=runner-{0}-{1}-{2},mode=max', matrix.os, matrix.os-version, needs.setup.outputs.environment) || '' }}
           push: ${{ needs.setup.outputs.docker-registry != '' }}
           pull: ${{ needs.setup.outputs.environment != '' }}
           outputs: ${{ needs.setup.outputs.docker-output }}
@@ -205,11 +195,10 @@ jobs:
           tags: |
             ${{ needs.setup.outputs.docker-registry != '' && format('{0}/riscv-runner:dind-{1}', needs.setup.outputs.docker-registry, needs.setup.outputs.docker-tag-suffix) || '' }}
           cache-from: |
-            ${{ needs.setup.outputs.environment != '' && format('{0}dind-{1}', needs.setup.outputs.docker-cache, needs.setup.outputs.environment) || '' }}
-            ${{ needs.setup.outputs.environment == '' && format('{0}dind-staging', needs.setup.outputs.docker-cache) || '' }}
+            ${{ needs.setup.outputs.environment != '' && format('type=gha,scope=dind-{0}', needs.setup.outputs.environment) || '' }}
+            ${{ needs.setup.outputs.environment == '' && format('type=gha,scope=dind-staging') || '' }}
           cache-to: |
-            ${{ needs.setup.outputs.environment != '' && format('{0}dind-{1},mode=max', needs.setup.outputs.docker-cache, needs.setup.outputs.environment) || '' }}
-            ${{ needs.setup.outputs.environment == 'staging' && !startsWith(needs.setup.outputs.docker-cache, 'type=gha,') && format('type=gha,scope=dind-staging,mode=max') || '' }}
+            ${{ needs.setup.outputs.environment != '' && format('type=gha,scope=dind-{0},mode=max', needs.setup.outputs.environment) || '' }}
           push: ${{ needs.setup.outputs.docker-registry != '' }}
           pull: ${{ needs.setup.outputs.environment != '' }}
           outputs: ${{ needs.setup.outputs.docker-output }}
