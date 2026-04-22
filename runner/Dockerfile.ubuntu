@@ -789,8 +789,9 @@ RUN bash -eux -o pipefail <<'EOF'
         exit 1
     fi
 
-    # Clean up apt cache to reduce image size
-    rm -rf /var/lib/apt/lists/*
+    # Clean apt/dpkg cache
+    apt-get clean autoclean
+    rm -rf /var/lib/{apt,dpkg,cache,log}/
 
     # Add a user which will run the github actions
     groupadd -f docker
@@ -926,6 +927,10 @@ RUN su --shell /bin/bash runner -- -eux -o pipefail <<'EOF'
 
     # Install dependencies for the runner (if any)
     sudo /home/runner/actions-runner/cached/${RUNNER_VERSION}/bin/installdependencies.sh
+
+    # Clean apt/dpkg cache
+    sudo apt-get clean autoclean
+    sudo rm -rf /var/lib/{apt,dpkg,cache,log}/
 EOF
 
 COPY riscv-runner-entrypoint.sh /usr/local/bin/riscv-runner-entrypoint.sh
