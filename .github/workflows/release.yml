@@ -56,7 +56,7 @@ jobs:
           # Which Docker registry to use
           if [[ "${deploy_target}" == "scw" ]]; then
             docker_registry="rg.fr-par.scw.cloud/funcscwriseriscvrunnerappqdvknz9s"
-          elif ${{ github.event_name != 'pull_request' }}; then
+          elif ${{ github.event_name != 'pull_request' || github.repository == github.event.pull_request.head.repo.full_name }}; then
             docker_registry="ghcr.io/${{ github.repository }}"
           else
             docker_registry="" # we do not push on PR
