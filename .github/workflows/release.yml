@@ -139,10 +139,10 @@ jobs:
           tags: |
             ${{ needs.setup.outputs.docker-registry != '' && format('{0}/riscv-runner:{1}-{2}-{3}', needs.setup.outputs.docker-registry, matrix.os, matrix.os-version, needs.setup.outputs.docker-tag-suffix) || '' }}
           cache-from: |
-            ${{ needs.setup.outputs.environment != '' && format('type=gha,scope=runner-{0}-{1}-{2}', matrix.os, matrix.os-version, needs.setup.outputs.environment) || '' }}
-            ${{ needs.setup.outputs.environment == '' && format('type=gha,scope=runner-{0}-{1}-staging', matrix.os, matrix.os-version) || '' }}
+            ${{ format('type=gha,scope=runner-{0}-{1}-staging', matrix.os, matrix.os-version) }}
+            ${{ format('type=gha,scope=runner-{0}-{1}', matrix.os, matrix.os-version) }}
           cache-to: |
-            ${{ needs.setup.outputs.environment != '' && format('type=gha,scope=runner-{0}-{1}-{2},mode=max', matrix.os, matrix.os-version, needs.setup.outputs.environment) || '' }}
+            ${{ needs.setup.outputs.environment != '' && format('type=gha,scope=runner-{0}-{1},mode=max', matrix.os, matrix.os-version) || '' }}
           push: ${{ needs.setup.outputs.docker-registry != '' }}
           pull: ${{ needs.setup.outputs.environment != '' }}
           outputs: ${{ needs.setup.outputs.docker-output }}
