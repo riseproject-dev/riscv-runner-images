@@ -1,9 +1,9 @@
 #!/bin/bash
-set -eu
+set -eux -o pipefail
 
 # Some assertions before we get going
 test "$(whoami)" = "runner" || (echo "Must run as runner"; exit 1)
-test "$(realpath)" = "/home/runner" || (echo "Must run from /home/runner"; exit 1)
+test "$(realpath .)" = "/home/runner" || (echo "Must run from /home/runner"; exit 1)
 
 cleanup() {
     echo "Shutting down..."
@@ -28,7 +28,7 @@ if [ -n "${DOCKER_IPTABLES_LEGACY+x}" ]; then
     fi
 elif (
     for f in /proc/net/ip_tables_names /proc/net/ip6_tables_names /proc/net/arp_tables_names; do
-        if b="$(cat "$f")" && [ -n "$b" ]; then exit 0; fi
+        if b="$(sudo cat "$f")" && [ -n "$b" ]; then exit 0; fi
     done
     exit 1
 ); then
@@ -48,7 +48,7 @@ if [ -n "$iptablesLegacy" ]; then
 fi
 
 # --- Start containerd ---
-sudo containerd &>/var/log/containerd.log &
+sudo containerd &> >(sudo tee /var/log/containerd.log >/dev/null) &
 CONTAINERD_PID=$!
 
 # --- Start dockerd ---
@@ -56,7 +56,7 @@ sudo dockerd \
     --host=unix:///var/run/docker.sock \
     --containerd=/run/containerd/containerd.sock \
     --mtu=1450 \
-    &>/var/log/dockerd.log &
+    &> >(sudo tee /var/log/dockerd.log >/dev/null) &
 DOCKERD_PID=$!
 
 # --- Run GitHub runner ---
