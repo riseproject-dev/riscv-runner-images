@@ -789,9 +789,10 @@ RUN bash -eux -o pipefail <<'EOF'
         exit 1
     fi
 
-    # Clean apt/dpkg cache
-    apt-get clean autoclean
-    rm -rf /var/lib/{apt,dpkg,cache,log}/
+    # Clean apt cache. Do NOT remove /var/lib/dpkg — it holds the package
+    # database and lock files; without it, `apt-get install` fails for users.
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
 
     # Add a user which will run the github actions
     groupadd -f docker
@@ -932,9 +933,10 @@ RUN bash -eux -o pipefail <<'EOF'
     # Install dependencies for the runner (if any)
     sudo /home/runner/actions-runner/cached/${RUNNER_VERSION}/bin/installdependencies.sh
 
-    # Clean apt/dpkg cache
-    sudo apt-get clean autoclean
-    sudo rm -rf /var/lib/{apt,dpkg,cache,log}/
+    # Clean apt cache. Do NOT remove /var/lib/dpkg — it holds the package
+    # database and lock files; without it, `apt-get install` fails for users.
+    sudo apt-get clean
+    sudo rm -rf /var/lib/apt/lists/*
 EOF
 
 ENTRYPOINT ["/usr/local/bin/docker-init", "--", "/usr/local/bin/riscv-runner-entrypoint.sh"]
