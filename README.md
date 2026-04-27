@@ -8,7 +8,7 @@ Built natively on RISC-V hardware and pushed to the Scaleway Container Registry.
 
 ### Runner (`runner/Dockerfile.ubuntu`)
 
-Single unified GitHub Actions runner image based on Ubuntu, with `dockerd` and `containerd` bundled in (no separate Docker-in-Docker sidecar). Available variants:
+GitHub Actions runner image based on Ubuntu. Available variants:
 
 | Tag | Base |
 |-----|------|
@@ -18,20 +18,17 @@ Single unified GitHub Actions runner image based on Ubuntu, with `dockerd` and `
 `<suffix>` is `latest` for builds from `main` and the branch slug otherwise (e.g. `staging`).
 
 The runner image includes:
-- [GitHub Actions Runner for RISC-V](https://github.com/alitariq4589/github-runner-riscv) (built with .NET 8)
+- [GitHub Actions Runner for RISC-V](https://github.com/Cloud-V-10xE/github-runner-riscv) (built with .NET 8)
 - Java (Adoptium Temurin)
 - Python (including free-threaded variants)
 - Node.js, Go, Rust
 - Apache Ant, Gradle, Apache Maven
-- Docker CLI, Docker Buildx, Docker Compose
-- Bundled `dockerd` + `containerd` (unified Docker-in-Docker, no sidecar required)
+- Docker (CLI + daemon, Buildx, Compose), podman, buildah, skopeo, runc, kubectl
 - git, curl, wget, jq, sudo, and many more CLI tools
 
 Pinned versions for every tool above live in [`versions-map.json`](versions-map.json) and are kept in sync with upstream by [`scripts/update-versions.py`](scripts/update-versions.py).
 
 The image aims to match the packages installed in the [official GitHub Actions runner images](https://github.com/actions/runner-images). **Let us know if any package you depend on is missing!**
-
-The entrypoint (`runner/riscv-runner-entrypoint.sh`) uses `docker-init` (tini) as PID 1, starts `containerd` and `dockerd` in the background (unix socket, no TLS), then drops to the `runner` user to execute `./run.sh --jitconfig $RUNNER_JITCONFIG`. Because `dockerd` and the runner share the same filesystem, Docker bind mounts from inside jobs (e.g. `-v /home/runner/_work:/work`) work as expected.
 
 Build args:
 - `OS_VERSION` — Ubuntu base image version (default: `latest`)
@@ -43,8 +40,8 @@ Build args:
 ├── .github/workflows/
 │   └── release.yml                    # CI: builds and pushes the runner image
 ├── runner/
-│   ├── Dockerfile.ubuntu              # Unified runner image (with bundled dockerd + containerd)
-│   └── riscv-runner-entrypoint.sh     # PID-1 entrypoint: starts containerd+dockerd, execs runner
+│   ├── Dockerfile.ubuntu              # Runner image
+│   └── riscv-runner-entrypoint.sh     # PID-1 entrypoint, execs the runner
 ├── scripts/
 │   └── update-versions.py             # Syncs pinned versions from upstream
 ├── versions-map.json                  # Pinned versions for all bundled tools
