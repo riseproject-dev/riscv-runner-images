@@ -1,4 +1,4 @@
-name: Nightly Release Trigger on main
+name: Nightly Release Trigger
 
 on:
   schedule:
@@ -14,31 +14,13 @@ jobs:
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
+            const { data: repo } = await github.rest.repos.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'release.yml',
-              ref: 'main',
+              ref: repo.default_branch,
             });
-
-  check-divergence:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Check for divergence between main and staging
-        run: |
-          git fetch --unshallow origin main staging
-
-          read left right < <(git rev-list --left-right --count origin/main...origin/staging)
-
-          echo "Commits in main but not staging: $left"
-          echo "Commits in staging but not main: $right"
-
-          if [ "$left" -ne 0 ] || [ "$right" -ne 0 ]; then
-            echo "::error::main and staging have diverged (main ahead by $left, staging ahead by $right)"
-            exit 1
-          fi
-
-          echo "main and staging are in sync"
