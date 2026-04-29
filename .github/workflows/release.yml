@@ -6,10 +6,10 @@ permissions:
 on:
   push:
     branches:
-      - staging
+      - main
   pull_request:
     branches:
-      - staging
+      - main
   workflow_dispatch:
 
 jobs:
