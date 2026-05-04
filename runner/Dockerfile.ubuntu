@@ -111,9 +111,9 @@ EOF
 # Build Python 3.13
 FROM base-builder AS python-3.13
 
-ARG PYTHON313_VERSION=3.13.12
-ARG PYTHON313_TAG=${PYTHON313_VERSION}-24736470920
-ARG PYTHON313_SHA256=7a5a22471bbda70bb05653f742c0a0fa48217522fa96bdae46cf7c873c84b53f # https://github.com/riseproject-dev/python-versions/releases/${PYTHON313_TAG}
+ARG PYTHON313_VERSION=3.13.13
+ARG PYTHON313_TAG=${PYTHON313_VERSION}-24736470736
+ARG PYTHON313_SHA256=0f44fe31a9dc49d3d1c896a0de5b421309abe40b4253b4b975b0e94e43b130ab # https://github.com/riseproject-dev/python-versions/releases/${PYTHON313_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.13
     curl -fsSL --retry 12 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON313_TAG}/python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
@@ -135,9 +135,9 @@ EOF
 # Build Python 3.13 (free threaded)
 FROM base-builder AS python-3.13t
 
-ARG PYTHON313_VERSION=3.13.12
-ARG PYTHON313_TAG=${PYTHON313_VERSION}-24736470920
-ARG PYTHON313_SHA256=95f48f3dae67339bc6755eea931d57fc58f84b76dd976a5a98222dcf3fb4c05d # https://github.com/riseproject-dev/python-versions/releases/${PYTHON313_TAG}
+ARG PYTHON313_VERSION=3.13.13
+ARG PYTHON313_TAG=${PYTHON313_VERSION}-24736470736
+ARG PYTHON313_SHA256=8b41f6c8406805ecf2a513ad3d52e56ad32353578b0d249fd02a76e280ee2e0c # https://github.com/riseproject-dev/python-versions/releases/${PYTHON313_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.13
     curl -fsSL --retry 12 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON313_TAG}/python-${PYTHON313_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz \
@@ -159,9 +159,9 @@ EOF
 # Build Python 3.14
 FROM base-builder AS python-3.14
 
-ARG PYTHON314_VERSION=3.14.3
-ARG PYTHON314_TAG=${PYTHON314_VERSION}-24734614191
-ARG PYTHON314_SHA256=c6ed84e5e90e7fbd76c2f2f6ad1abedafaba97e226d765ca621b9c5cdced4f7c # https://github.com/riseproject-dev/python-versions/releases/${PYTHON314_TAG}
+ARG PYTHON314_VERSION=3.14.4
+ARG PYTHON314_TAG=${PYTHON314_VERSION}-24734614154
+ARG PYTHON314_SHA256=3688a211455a084ae1c77e9a093417d4472906496e977fc2ce8adca5d5978893 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON314_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.14
     curl -fsSL --retry 12 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON314_TAG}/python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64.tar.gz \
@@ -183,9 +183,9 @@ EOF
 # Build Python 3.14 (free threaded)
 FROM base-builder AS python-3.14t
 
-ARG PYTHON314_VERSION=3.14.3
-ARG PYTHON314_TAG=${PYTHON314_VERSION}-24734614191
-ARG PYTHON314_SHA256=1751c64f11401cdcafcdac355203af4cb85ef128d53cf177a2042b30b7004101 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON314_TAG}
+ARG PYTHON314_VERSION=3.14.4
+ARG PYTHON314_TAG=${PYTHON314_VERSION}-24734614154
+ARG PYTHON314_SHA256=a575e5c7a74c86bff1110531fdd3592a07a910d8463c9aba982707a2ec06b824 # https://github.com/riseproject-dev/python-versions/releases/${PYTHON314_TAG}
 RUN bash -eux -o pipefail <<'EOF'
     # Download Python 3.14
     curl -fsSL --retry 12 --retry-all-errors https://github.com/riseproject-dev/python-versions/releases/download/${PYTHON314_TAG}/python-${PYTHON314_VERSION}-linux-${OS_VERSION}-riscv64-freethreaded.tar.gz \
@@ -273,8 +273,8 @@ ENV PATH=${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}/riscv64/bin:${PATH}
 # Download Go 1.25
 FROM base-builder AS go-1.25
 
-ARG GO125_VERSION=1.25.8
-ARG GO125_SHA256=1f90bdfabbbf8060f048186f6355b2fb6a839aab499b61f790f90ee5367b05a5 # https://dl.google.com/go/go1.25.8.linux-riscv64.tar.gz.sha256
+ARG GO125_VERSION=1.25.9
+ARG GO125_SHA256=2a630be8f854177c13e5fa75f7812c721369ecb9bd6e4c0fb1bd1c708d08b37c # https://dl.google.com/go/go1.25.9.linux-riscv64.tar.gz.sha256
 RUN bash -eux -o pipefail <<'EOF'
     # Download Go 1.25
     curl -fsSL --retry 12 --retry-all-errors https://go.dev/dl/go${GO125_VERSION}.linux-riscv64.tar.gz \
@@ -815,10 +815,10 @@ ARG PYTHON311_VERSION=3.11.15
 COPY --link --from=python-3.11 --chown=1001:1001 --chmod=0777 ${RUNNER_TOOL_CACHE}/Python/${PYTHON311_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON311_VERSION}
 ARG PYTHON312_VERSION=3.12.13
 COPY --link --from=python-3.12 --chown=1001:1001 --chmod=0777 ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON312_VERSION}
-ARG PYTHON313_VERSION=3.13.12
+ARG PYTHON313_VERSION=3.13.13
 COPY --link --from=python-3.13  --chown=1001:1001 --chmod=0777 ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}
 COPY --link --from=python-3.13t --chown=1001:1001 --chmod=0777 ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON313_VERSION}
-ARG PYTHON314_VERSION=3.14.3
+ARG PYTHON314_VERSION=3.14.4
 COPY --link --from=python-3.14  --chown=1001:1001 --chmod=0777 ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}
 COPY --link --from=python-3.14t --chown=1001:1001 --chmod=0777 ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION} ${RUNNER_TOOL_CACHE}/Python/${PYTHON314_VERSION}
 
@@ -832,7 +832,7 @@ ENV GOROOT_1_23_RISCV64=${RUNNER_TOOL_CACHE}/go/${GO123_VERSION}/riscv64
 ARG GO124_VERSION=1.24.13
 COPY --link --from=go-1.24 --chown=1001:1001 --chmod=0777 ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION} ${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}
 ENV GOROOT_1_24_RISCV64=${RUNNER_TOOL_CACHE}/go/${GO124_VERSION}/riscv64
-ARG GO125_VERSION=1.25.8
+ARG GO125_VERSION=1.25.9
 COPY --link --from=go-1.25 --chown=1001:1001 --chmod=0777 ${RUNNER_TOOL_CACHE}/go/${GO125_VERSION} ${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}
 ENV GOROOT_1_25_RISCV64=${RUNNER_TOOL_CACHE}/go/${GO125_VERSION}/riscv64
 
